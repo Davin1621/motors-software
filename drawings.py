@@ -71,31 +71,35 @@ class GridApp:
         canvas.elements = []
 
         if component_type == "Resistor":
-            # Dibujar resistencia
-            line1 = canvas.create_line(x1, y1, x1 + 5, y1, fill="black", width=2)
-            rect = canvas.create_rectangle(x1 + 5, y1 - 5, x2 - 5, y1 + 5, outline="black", width=2)
-            line2 = canvas.create_line(x2 - 5, y1, x2, y1, fill="black", width=2)
-            canvas.elements.extend([line1, rect, line2])
-
+            self.draw_resistor(canvas, x1, y1, x2, y2)
         elif component_type == "Inductor":
-            # Dibujar inductor
-            line1 = canvas.create_line(x1, y1, x1 + 5, y1, fill="black", width=2)
-            arc1 = canvas.create_arc(x1 + 5, y1 - 5, x1 + 15, y1 + 5, start=0, extent=180, style='arc', outline="black", width=2)
-            arc2 = canvas.create_arc(x1 + 15, y1 - 5, x1 + 25, y1 + 5, start=0, extent=180, style='arc', outline="black", width=2)
-            arc3 = canvas.create_arc(x1 + 25, y1 - 5, x1 + 35, y1 + 5, start=0, extent=180, style='arc', outline="black", width=2)
-            line2 = canvas.create_line(x2 - 5, y1, x2, y1, fill="black", width=2)
-            canvas.elements.extend([line1, arc1, arc2, arc3, line2])
-
+            self.draw_inductor(canvas, x1, y1, x2, y2)
         elif component_type == "Capacitor":
-            # Dibujar capacitor
-            line1 = canvas.create_line(x1, y1, x1 + 15, y1, fill="black", width=2)
-            line2 = canvas.create_line(x1 + 15, y1 - 10, x1 + 15, y1 + 10, fill="black", width=2)
-            line3 = canvas.create_line(x1 + 25, y1 - 10, x1 + 25, y1 + 10, fill="black", width=2)
-            line4 = canvas.create_line(x1 + 25, y1, x2, y1, fill="black", width=2)
-            canvas.elements.extend([line1, line2, line3, line4])
+            self.draw_capacitor(canvas, x1, y1, x2, y2)
 
         # Guardar el canvas en el frame para acceder a él más tarde
         canvas.canvas = canvas
+
+    def draw_resistor(self, canvas, x1, y1, x2, y2):
+        line1 = canvas.create_line(x1, y1, x1 + 5, y1, fill="black", width=2)
+        rect = canvas.create_rectangle(x1 + 5, y1 - 5, x2 - 5, y1 + 5, outline="black", width=2)
+        line2 = canvas.create_line(x2 - 5, y1, x2, y1, fill="black", width=2)
+        canvas.elements.extend([line1, rect, line2])
+
+    def draw_inductor(self, canvas, x1, y1, x2, y2):
+        line1 = canvas.create_line(x1, y1, x1 + 5, y1, fill="black", width=2)
+        arc1 = canvas.create_arc(x1 + 5, y1 - 5, x1 + 15, y1 + 5, start=0, extent=180, style='arc', outline="black", width=2)
+        arc2 = canvas.create_arc(x1 + 15, y1 - 5, x1 + 25, y1 + 5, start=0, extent=180, style='arc', outline="black", width=2)
+        arc3 = canvas.create_arc(x1 + 25, y1 - 5, x1 + 35, y1 + 5, start=0, extent=180, style='arc', outline="black", width=2)
+        line2 = canvas.create_line(x2 - 5, y1, x2, y1, fill="black", width=2)
+        canvas.elements.extend([line1, arc1, arc2, arc3, line2])
+
+    def draw_capacitor(self, canvas, x1, y1, x2, y2):
+        line1 = canvas.create_line(x1, y1, x1 + 15, y1, fill="black", width=2)
+        line2 = canvas.create_line(x1 + 15, y1 - 10, x1 + 15, y1 + 10, fill="black", width=2)
+        line3 = canvas.create_line(x1 + 25, y1 - 10, x1 + 25, y1 + 10, fill="black", width=2)
+        line4 = canvas.create_line(x1 + 25, y1, x2, y1, fill="black", width=2)
+        canvas.elements.extend([line1, line2, line3, line4])
 
     def rotate_component(self, row, col):
         canvas = self.canvases[row][col]
