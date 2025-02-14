@@ -2,133 +2,141 @@ import customtkinter as ctk
 from tkinter import messagebox
 
 # Constants for padding
-FRAME_PADX = 0
-FRAME_PADY = 0
 LABEL_PADY = 10
 BUTTON_PADY = 5
 
-class GridApp:
+class CanvasApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("10x10 Grid")
-        self.canvases = []
-        self.grid_visible = True
+        self.root.title("Single Canvas")
+        self.canvas = ctk.CTkCanvas(self.root, width=500, height=500, bg="SystemButtonFace", highlightthickness=1)
+        self.canvas.pack()
+        self.canvas.bind("<Button-1>", self.on_canvas_click)
+        self.canvas.bind("<Motion>", self.on_mouse_move)  # Bind mouse motion event
+        self.canvas.elements = []
+        self.coord_label = ctk.CTkLabel(self.root, text="")
+        self.coord_label.pack()
 
-        self.create_grid()
-        self.create_toggle_button()
+        
 
-    def create_grid(self):
-        for row in range(10):
-            row_canvases = []
-            for col in range(10):
-                canvas = ctk.CTkCanvas(self.root, width=50, height=50, bg="SystemButtonFace", highlightthickness=1)
-                canvas.grid(row=row, column=col, padx=FRAME_PADX, pady=FRAME_PADY)
-                canvas.bind("<Button-1>", lambda e, r=row, c=col: self.on_canvas_click(r, c))
-                canvas.configure(highlightthickness=0)
-                row_canvases.append(canvas)
-            self.canvases.append(row_canvases)
+    def on_mouse_move(self, event):
+        self.coord_label.configure(text=f"X: {event.x}, Y: {event.y}")
 
-    def create_toggle_button(self):
-        self.toggle_button = ctk.CTkButton(self.root, text="Toggle Grid Borders", command=self.toggle_grid_borders)
-        self.toggle_button.grid(row=10, column=0, columnspan=10)
-
-    def on_canvas_click(self, row, col):
+    def on_canvas_click(self, event):
         popup = ctk.CTkToplevel(self.root)
         popup.title("Select Component")
         popup.attributes('-topmost', True)  # Ensure the popup is on top
 
-        label = ctk.CTkLabel(popup, text=f"Row: {row}, Column: {col}")
+        label = ctk.CTkLabel(popup, text=f"X: {event.x}, Y: {event.y}")
         label.pack(pady=LABEL_PADY)
 
-        resistor_button = ctk.CTkButton(popup, text="Resistor", 
-                                       command=lambda: [self.draw_component(row, col, "Resistor"), popup.destroy()])
-        resistor_button.pack(pady=BUTTON_PADY)
+        component_var = ctk.StringVar(value="Select Component")
+        component_dropdown = ctk.CTkComboBox(popup, values=["Resistor", "Inductor", "Capacitor", "Resistor3"], variable=component_var)
+        component_dropdown.pack(pady=BUTTON_PADY)
 
-        inductor_button = ctk.CTkButton(popup, text="Inductor", 
-                                       command=lambda: [self.draw_component(row, col, "Inductor"), popup.destroy()])
-        inductor_button.pack(pady=BUTTON_PADY)
-
-        capacitor_button = ctk.CTkButton(popup, text="Capacitor", 
-                                       command=lambda: [self.draw_component(row, col, "Capacitor"), popup.destroy()])
-        capacitor_button.pack(pady=BUTTON_PADY)
-
-        rotate_button = ctk.CTkButton(popup, text="Rotate 90°", 
-                                    command=lambda: [self.rotate_component(row, col), popup.destroy()])
-        rotate_button.pack(pady=BUTTON_PADY)
+        select_button = ctk.CTkButton(popup, text="Select", 
+                                      command=lambda: [self.draw_component(event.x, event.y, component_var.get()), popup.destroy()])
+        select_button.pack(pady=BUTTON_PADY)
 
         close_button = ctk.CTkButton(popup, text="Close", command=popup.destroy)
         close_button.pack(pady=BUTTON_PADY)
 
-    def draw_component(self, row, col, component_type):
-        canvas = self.canvases[row][col]
-        canvas.delete("all")  # Clear any existing drawings
-
+    def draw_component(self, x, y, component_type):
         # Puntos centrales del canvas ajustados al tamaño del canvas
-        x1, y1 = 0, canvas.winfo_height() // 2
-        x2, y2 = canvas.winfo_width(), canvas.winfo_height() // 2
-
-        # Guardar los elementos dibujados en una lista
-        canvas.elements = []
+        x1, y1 = x, y
+        x2, y2 = x + 50, y
 
         if component_type == "Resistor":
-            self.draw_resistor(canvas, x1, y1, x2, y2)
+            print(f"self.draw_resistor(self.canvas, [{x1}, {y1}], [{x2}, {y2}])")
+            self.draw_resistor(self.canvas, [x1, y1], [x2, y2])
         elif component_type == "Inductor":
-            self.draw_inductor(canvas, x1, y1, x2, y2)
+            print(f"self.draw_inductor(self.canvas, [{x1}, {y1}], [{x2}, {y2}])")
+            self.draw_inductor(self.canvas, [x1, y1], [x2, y2])
         elif component_type == "Capacitor":
-            self.draw_capacitor(canvas, x1, y1, x2, y2)
+            print(f"self.draw_capacitor(self.canvas, [{x1}, {y1}], [{x2}, {y2}])")
+            self.draw_capacitor(self.canvas, [x1, y1], [x2, y2])
+        elif component_type == "Resistor3":
+            print(f"self.draw_resistor3(self.canvas, [{x1}, {y1}], {x + 25}, {x + 50}, 'vertical', 40)")
+            self.draw_resistor3(self.canvas, [x1, y1], x + 25, x + 50, "vertical", 40)
 
-        # Guardar el canvas en el frame para acceder a él más tarde
-        canvas.canvas = canvas
-
-    def draw_resistor(self, canvas, x1, y1, x2, y2):
+    def draw_resistor(self, canvas, p1, p2):
+        x1, y1 = p1
+        x2, y2 = p2
         line1 = canvas.create_line(x1, y1, x1 + 5, y1, fill="black", width=2)
-        rect = canvas.create_rectangle(x1 + 5, y1 - 5, x2 - 5, y1 + 5, outline="black", width=2)
-        line2 = canvas.create_line(x2 - 5, y1, x2, y1, fill="black", width=2)
+        rect = canvas.create_rectangle(x1 + 5, y1 - 5, x1 + 15, y1 + 5, outline="black", width=2)
+        line2 = canvas.create_line(x1 + 15, y1, x2, y2, fill="black", width=2)
         canvas.elements.extend([line1, rect, line2])
 
-    def draw_inductor(self, canvas, x1, y1, x2, y2):
+    def draw_resistor3(self, canvas, pmain, coord_center, coord_final, orientation, scale):
+        #default orientation is horizontal
+
+        if coord_center == "center" and orientation == "horizontal":
+            coord_center = (pmain[0] + coord_final)/2
+
+        if coord_center == "center" and orientation == "vertical":
+            coord_center = (pmain[1] + coord_final)/2
+
+        match orientation:
+            case "horizontal":
+                x1 = pmain[0]
+                x2 = coord_center
+                x3 = coord_final
+
+                y=pmain[1]
+
+                rectangle_width = 1 * scale
+                rectangle_height = rectangle_width*(1/3)
+
+                if rectangle_width >= (x3-x1):
+                    rectangle_width = (x3-x1)*0.9
+
+                line1 = canvas.create_line(x1, y, x2-rectangle_width/2, y, fill="black", width=2)
+
+                rect = canvas.create_rectangle(x2-rectangle_width/2, y - rectangle_height/2, x2 + rectangle_width/2, y + rectangle_height/2, outline="black", width=2)
+
+                line2 = canvas.create_line(x2 + rectangle_width/2, y, x3, y, fill="black", width=2)
+
+            case "vertical":
+                y1 = pmain[1]
+                y2 = coord_center
+                y3 = coord_final
+
+                x=pmain[0]
+
+                rectangle_height = 1 * scale
+                rectangle_width = rectangle_height*(1/3)
+
+                if rectangle_height >= (y3-y1):
+                    rectangle_height = (y3-y1)*0.9
+
+                line1 = canvas.create_line(x, y1, x, y2-rectangle_height/2, fill="black", width=2)
+
+                rect = canvas.create_rectangle(x - rectangle_width/2, y2-rectangle_height/2, x + rectangle_width/2, y2 + rectangle_height/2, outline="black", width=2)
+
+                line2 = canvas.create_line(x, y2 + rectangle_height/2, x, y3, fill="black", width=2)
+
+        canvas.elements.extend([line1, rect, line2])
+    
+    def draw_inductor(self, canvas, p1, p2):
+        x1, y1 = p1
+        x2, y2 = p2
         line1 = canvas.create_line(x1, y1, x1 + 5, y1, fill="black", width=2)
         arc1 = canvas.create_arc(x1 + 5, y1 - 5, x1 + 15, y1 + 5, start=0, extent=180, style='arc', outline="black", width=2)
         arc2 = canvas.create_arc(x1 + 15, y1 - 5, x1 + 25, y1 + 5, start=0, extent=180, style='arc', outline="black", width=2)
         arc3 = canvas.create_arc(x1 + 25, y1 - 5, x1 + 35, y1 + 5, start=0, extent=180, style='arc', outline="black", width=2)
-        line2 = canvas.create_line(x2 - 5, y1, x2, y1, fill="black", width=2)
+        line2 = canvas.create_line(x1 + 35, y1, x2, y2, fill="black", width=2)
         canvas.elements.extend([line1, arc1, arc2, arc3, line2])
 
-    def draw_capacitor(self, canvas, x1, y1, x2, y2):
+    def draw_capacitor(self, canvas, p1, p2):
+        x1, y1 = p1
+        x2, y2 = p2
         line1 = canvas.create_line(x1, y1, x1 + 15, y1, fill="black", width=2)
         line2 = canvas.create_line(x1 + 15, y1 - 10, x1 + 15, y1 + 10, fill="black", width=2)
         line3 = canvas.create_line(x1 + 25, y1 - 10, x1 + 25, y1 + 10, fill="black", width=2)
         line4 = canvas.create_line(x1 + 25, y1, x2, y1, fill="black", width=2)
         canvas.elements.extend([line1, line2, line3, line4])
 
-    def rotate_component(self, row, col):
-        canvas = self.canvases[row][col]
-        if hasattr(canvas, 'elements'):
-            for item in canvas.elements:
-                coords = canvas.coords(item)
-                if coords:  # Verificar que coords no es None
-                    # Rotar coordenadas
-                    center_x = canvas.winfo_width() / 2
-                    center_y = canvas.winfo_height() / 2
-                    new_coords = []
-                    for i in range(0, len(coords), 2):
-                        x = coords[i] - center_x
-                        y = coords[i+1] - center_y
-                        new_x = -y + center_x
-                        new_y = x + center_y
-                        new_coords.extend([new_x, new_y])
-                    canvas.coords(item, *new_coords)
-
-    def toggle_grid_borders(self):
-        self.grid_visible = not self.grid_visible
-        for row_canvases in self.canvases:
-            for canvas in row_canvases:
-                if self.grid_visible:
-                    canvas.configure(highlightthickness=1)
-                else:
-                    canvas.configure(highlightthickness=0)
-
 if __name__ == "__main__":
     root = ctk.CTk()
-    app = GridApp(root)
+    app = CanvasApp(root)
     root.mainloop()
