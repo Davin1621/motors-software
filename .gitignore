@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+/considerations.txt
+/datasets list generator.xlsx
+/datasets list.txt
+/drive_parameters.py
+/fea_2_bars.py
+/main_gui.py
+/parameter_formulas.py
+/post_process_results.py
+/pwm.py
+/topology_tab.py
+/TEST.py
+
+
