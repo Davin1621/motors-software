@@ -17,7 +17,9 @@ class CanvasApp:
         self.coord_label = ctk.CTkLabel(self.root, text="")
         self.coord_label.pack()
 
-        
+        self.log_button = ctk.CTkButton(self.root, text="Print Log", command=self.print_log)
+        self.log_button.pack(pady=BUTTON_PADY)
+
 
     def on_mouse_move(self, event):
         self.coord_label.configure(text=f"X: {event.x}, Y: {event.y}")
@@ -47,17 +49,42 @@ class CanvasApp:
         x2, y2 = x + 50, y
 
         if component_type == "Resistor":
-            print(f"self.draw_resistor(self.canvas, [{x1}, {y1}], [{x2}, {y2}])")
+            message = f"self.draw_resistor(self.canvas, [{x1}, {y1}], [{x2}, {y2}])"
+            print(message)
+            self.log_message(message)
             self.draw_resistor(self.canvas, [x1, y1], [x2, y2])
         elif component_type == "Inductor":
-            print(f"self.draw_inductor(self.canvas, [{x1}, {y1}], [{x2}, {y2}])")
+            message = f"self.draw_inductor(self.canvas, [{x1}, {y1}], [{x2}, {y2}])"
+            print(message)
+            self.log_message(message)
             self.draw_inductor(self.canvas, [x1, y1], [x2, y2])
         elif component_type == "Capacitor":
-            print(f"self.draw_capacitor(self.canvas, [{x1}, {y1}], [{x2}, {y2}])")
+            message = f"self.draw_capacitor(self.canvas, [{x1}, {y1}], [{x2}, {y2}])"
+            print(message)
+            self.log_message(message)
             self.draw_capacitor(self.canvas, [x1, y1], [x2, y2])
         elif component_type == "Resistor3":
-            print(f"self.draw_resistor3(self.canvas, [{x1}, {y1}], {x + 25}, {x + 50}, 'vertical', 40)")
+            message = f"self.draw_resistor3(self.canvas, [{x1}, {y1}], {x + 25}, {x + 50}, 'vertical', 40)"
+            print(message)
+            self.log_message(message)
             self.draw_resistor3(self.canvas, [x1, y1], x + 25, x + 50, "vertical", 40)
+
+    def log_message(self, message):
+        if not hasattr(self, 'log'):
+            self.log = []
+        self.log.append(message)
+
+    def print_log(self):
+        if len(self.log) > 1:
+            import csv
+            from tkinter import filedialog
+
+            file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
+            if file_path:
+                with open(file_path, mode='w', newline='') as file:
+                    writer = csv.writer(file, delimiter='|', quoting=csv.QUOTE_NONE, escapechar='|')
+                    for item in self.log:
+                        writer.writerow([item])
 
     def draw_resistor(self, canvas, p1, p2):
         x1, y1 = p1

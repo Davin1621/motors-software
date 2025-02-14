@@ -1,0 +1,2 @@
+self.draw_resistor(self.canvas, [103, 154], [153, 154])
+self.draw_capacitor(self.canvas, [135, 207], [185, 207])
