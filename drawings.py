@@ -9,6 +9,8 @@ class CanvasApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Single Canvas")
+
+        self.created_dots = []
         
         self.canvas = ctk.CTkCanvas(self.root, width=500, height=500, bg="SystemButtonFace", highlightthickness=1)
         self.canvas.pack()
@@ -25,9 +27,33 @@ class CanvasApp:
         self.log_button = ctk.CTkButton(self.root, text="Print Log", command=self.print_log)
         self.log_button.pack(pady=PADDING)
 
+        self.log_button_dots = ctk.CTkButton(self.root, text="Print Dots", command=lambda: print(self.created_dots))
+        self.log_button_dots.pack(pady=PADDING)
+
+        self.log_button_dots_1 = ctk.CTkButton(self.root, text="Print Dots 1", command=lambda: print(self.created_dots[0][0]))
+        self.log_button_dots_1.pack(pady=PADDING)
+
 
     def on_mouse_move(self, event):
-        self.coord_label.configure(text=f"X: {event.x}, Y: {event.y}")
+        if hasattr(event, '_generated'):
+            return
+        
+        for dot in self.created_dots:
+            dot_x, dot_y = dot
+            distance = ((event.x - dot_x)**2 + (event.y - dot_y)**2)**0.5
+            
+            if distance < 10:
+                self.coord_label.configure(text=f"X: {dot_x}, Y: {dot_y}")
+                self.canvas.create_rectangle(dot_x - 10, dot_y - 10, dot_x + 10, dot_y + 10, outline="red", tag="cursor_marker")
+                self.x_pos = dot_x
+                self.y_pos = dot_y
+                break
+        else:
+            self.coord_label.configure(text=f"X: {event.x}, Y: {event.y}")
+            self.canvas.delete("cursor_marker")
+            self.x_pos = event.x
+            self.y_pos = event.y
+        
 
     def on_canvas_click(self, event):
         popup = ctk.CTkToplevel(self.root)
@@ -35,6 +61,9 @@ class CanvasApp:
         popup.attributes('-topmost', True)  # Ensure the popup is on top
         popup.geometry("300x200")  # Define the dimensions of the popup
         popup.grab_set()  # Configure grab_set to prevent interaction with other windows
+
+        coord_x = self.x_pos
+        coord_y = self.y_pos
 
         popup.grid_columnconfigure(0, weight=1)  # Make the column expandable
 
@@ -45,11 +74,13 @@ class CanvasApp:
         component_dropdown = ctk.CTkComboBox(popup, values=["Resistor", "Inductor", "Capacitor", "Resistor3"], variable=component_var)
         component_dropdown.grid(row=1, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
 
-        select_button = ctk.CTkButton(popup, text="Select", command=lambda: [self.draw_component(event.x, event.y, component_var.get()), popup.destroy()])
+        select_button = ctk.CTkButton(popup, text="Select", command=lambda: [self.draw_component(coord_x, coord_y, component_var.get()), popup.destroy()])
         select_button.grid(row=2, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
 
         close_button = ctk.CTkButton(popup, text="Close", command=popup.destroy)
         close_button.grid(row=3, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
+
+        self.created_dots.append([coord_x, coord_y])
 
     def draw_component(self, x, y, component_type):
         # Puntos centrales del canvas ajustados al tamaño del canvas
