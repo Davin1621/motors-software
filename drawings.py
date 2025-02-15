@@ -4,7 +4,7 @@ from tkinter import messagebox
 # Constants for padding
 LABEL_PADY = 10
 PADDING = 5
-LINE_WIDTH = 8  # Constant for line width
+LINE_WIDTH = 2  # Constant for line width
 
 class CanvasApp:
     def __init__(self, root):
@@ -23,7 +23,7 @@ class CanvasApp:
         self.component_options = ["Select Component", "Resistor", "Inductor", "Capacitor", "Resistor3"]
         self.len_component_options = len(self.component_options)
 
-        self.parameters_labels = ["point 1","point 2","point 3","orientation","scale"]
+        self.parameters_labels = ["point 1","offset point 2"," offset point 3","orientation","scale"]
 
         
         self.coord_label = ctk.CTkLabel(self.root, text="")
@@ -65,23 +65,32 @@ class CanvasApp:
         popup.title("Select Component")
         popup.attributes('-topmost', True)  # Ensure the popup is on top
         popup.geometry("300x700")  # Define the dimensions of the popup
-        popup.grab_set()  # Configure grab_set to prevent interaction with other windows
+        #popup.grab_set()  # Configure grab_set to prevent interaction with other windows
 
-        coord_x = self.x_pos    #save the coordinates of the click
-        coord_y = self.y_pos    #save the coordinates of the click
+        self.coord_x = self.x_pos    #save the coordinates of the click
+        self.coord_y = self.y_pos    #save the coordinates of the click
 
-        label = ctk.CTkLabel(popup, text=f"X: {coord_x}, Y: {coord_y}")  #show the coordinates of the click
+
+
+        label = ctk.CTkLabel(popup, text=f"X: {self.coord_x}, Y: {self.coord_y}")  #show the coordinates of the click
 
         frame_paremeters=ctk.CTkFrame(popup)    #frame for parameters
-        #frame1=ctk.CTkFrame(frame_paremeters)
-        parameters_data = self.parameters_frames(frame_paremeters)
+        parameters_data = self.create_parameters_frames(frame_paremeters)
+
+        self.position_parameters_frames(parameters_data)
+
+        parameters_data[0][2].insert(0, f"[{self.coord_x}, {self.coord_y}]")
+        #parameters_data[1][2].insert(0, str(self.coord_y))
+
+        parameters_data[0][2].configure(state='disabled')
+        #parameters_data[1][2].configure(state='disabled')
         
         component_dropdown = ctk.CTkComboBox(popup, values=self.component_options)
         component_dropdown.set("Select Component")
-        component_dropdown.configure(command=lambda value: self.set_item_selected(value, parameters_data, frame_paremeters))
+        component_dropdown.configure(command=lambda value: self.set_item_selected(value))
 
         #select_button = ctk.CTkButton(popup, text="Select", command=lambda: [self.draw_component(coord_x, coord_y, component_var.get()), popup.destroy()])
-        select_button = ctk.CTkButton(popup, text="Select", command=lambda: self.draw_component(coord_x, coord_y, self.item_selected))
+        select_button = ctk.CTkButton(popup, text="Select", command=lambda: self.draw_component(self.coord_x, self.coord_y, self.item_selected, parameters_data))
         
         
         popup.grid_columnconfigure(0, weight=1)  # Make the column expandable
@@ -89,58 +98,58 @@ class CanvasApp:
         component_dropdown.grid(row=1, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
         select_button.grid(row=2, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
         frame_paremeters.grid(row=3, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
-        #frame1.grid(row=0, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
+ 
         frame_paremeters.grid_rowconfigure(0, weight=1)  # Make frame1 occupy all the space of its container
         frame_paremeters.grid_columnconfigure(0, weight=1)  # Make frame1 occupy all the space of its container
 
-        
 
-        
+        self.created_dots.append([self.coord_x, self.coord_y])
 
-
-        self.created_dots.append([coord_x, coord_y])
-
-    def set_item_selected(self, value, parameters_data,frame_paremeters):
+    def set_item_selected(self, value):
         self.item_selected = value
 
-        for i in range(5):
+        
+
+    def position_parameters_frames(self, parameters_data):
+        for i in range(len(self.parameters_labels)):
             frame_items = parameters_data[i]
             frame_items[0].grid(row=i, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
-            
+
             frame_items[0].grid_columnconfigure(0, weight=1)
             frame_items[0].grid_columnconfigure(1, weight=1)
             frame_items[0].grid_rowconfigure(i, weight=1)
 
 
-            frame_items[1].grid(row=0, column=0, pady=PADDING, padx=PADDING, sticky='w')
+            frame_items[1].grid(row=0, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
             frame_items[2].grid(row=0, column=1, pady=PADDING, padx=PADDING, sticky='e')
-           
 
-
-        
-
-    def parameters_frames(self, frame_paremeters):
+    def create_parameters_frames(self, frame_paremeters):
         frames_parameters = []
         for i in range(len(self.parameters_labels)):
             frame_items =[]
             frame_item = ctk.CTkFrame(frame_paremeters)
-            frame_item_label = ctk.CTkLabel(frame_item, text=self.parameters_labels[i])
-            frame_item_entry = ctk.CTkEntry(frame_item)
-
-            #frame_item.grid(row=i, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
+            frame_item_label = ctk.CTkLabel(frame_item, text=self.parameters_labels[i], justify='center')
+            frame_item_entry = ctk.CTkEntry(frame_item, justify='center')
 
             frame_items.append(frame_item)
             frame_items.append(frame_item_label)
             frame_items.append(frame_item_entry)
 
             frames_parameters.append(frame_items)
+            
 
         return frames_parameters
 
-    def draw_component(self, x, y, component_type):
+    def draw_component(self, x, y, component_type, parameters_data):
         # Puntos centrales del canvas ajustados al tamaño del canvas
         x1, y1 = x, y
         x2, y2 = x + 50, y
+
+        point_1 = [self.coord_x, self.coord_y]
+        offset_point_2 = parameters_data[1][2].get()
+        offset_point_3 = parameters_data[2][2].get()
+        orientation = parameters_data[3][2].get()
+        scale = parameters_data[4][2].get()
 
         if component_type == "Resistor":
             message = f"self.draw_resistor(self.canvas, [{x1}, {y1}], [{x2}, {y2}])"
@@ -156,12 +165,19 @@ class CanvasApp:
             message = f"self.draw_capacitor(self.canvas, [{x1}, {y1}], [{x2}, {y2}])"
             print(message)
             self.log_message(message)
-            self.draw_capacitor(self.canvas, [x1, y1], [x2, y2])
+            self.draw_capacitor(self.canvas, point_1, [x2, y2])
         elif component_type == "Resistor3":
-            message = f"self.draw_resistor3(self.canvas, [{x1}, {y1}], {x + 25}, {x + 50}, 'vertical', 40)"
+            message = f"self.draw_resistor3(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
             print(message)
             self.log_message(message)
-            self.draw_resistor3(self.canvas, [x1, y1], x + 25, x + 50, "vertical", 40)
+            self.draw_resistor3(self.canvas, point_1, offset_point_2, int(offset_point_3), orientation, int(scale))
+
+        #self.print_all_data_entries(parameters_data)
+
+    def print_all_data_entries(self, frames_parameters):
+        for frame_items in frames_parameters:
+            entry = frame_items[2]  # Assuming the entry widget is the third item in the list
+            print(entry.get())
 
     def log_message(self, message):
         if not hasattr(self, 'log'):
@@ -188,25 +204,35 @@ class CanvasApp:
         line2 = canvas.create_line(x1 + 15, y1, x2, y2, fill="black", width=LINE_WIDTH)
         canvas.elements.extend([line1, rect, line2])
 
-    def draw_resistor3(self, canvas, pmain, coord_center, coord_final, orientation, scale):
+    def draw_resistor3(self, canvas, pmain, offset_center, offset_final, orientation, scale):
         #default orientation is horizontal
 
-        if coord_center == "center" and orientation == "horizontal":
-            coord_center = (pmain[0] + coord_final)/2
+        if offset_center == "c":
+            if orientation == "h":
+                offset_center_var = pmain[0] + (offset_final/2)
+                offset_final_var=offset_final + pmain[0]
+            elif orientation == "v":
+                offset_center_var = pmain[1] - (offset_final/2)
+                offset_final_var=pmain[1] - offset_final 
 
-        if coord_center == "center" and orientation == "vertical":
-            coord_center = (pmain[1] + coord_final)/2
+        else:
+            offset_center_var = int(offset_center)
+            offset_final_var = offset_final+offset_center_var+pmain[0]
+
+
 
         match orientation:
-            case "horizontal":
+            case "h":
                 x1 = pmain[0]
-                x2 = coord_center
-                x3 = coord_final
+                x2 = offset_center_var
+                x3 = offset_final_var
 
                 y=pmain[1]
 
                 rectangle_width = 1 * scale
-                rectangle_height = rectangle_width*(1/3)
+                rectangle_height = int(round(rectangle_width * 0.4))
+
+                
 
                 if rectangle_width >= (x3-x1):
                     rectangle_width = (x3-x1)*0.9
@@ -217,24 +243,32 @@ class CanvasApp:
 
                 line2 = canvas.create_line(x2 + rectangle_width/2, y, x3, y, fill="black", width=LINE_WIDTH)
 
-            case "vertical":
+                print("punto x1",x1)
+                print("punto x2",x2)
+                print("punto x3",x3)
+
+            case "v":
                 y1 = pmain[1]
-                y2 = coord_center
-                y3 = coord_final
+                y2 = offset_center_var
+                y3 = offset_final_var
 
                 x=pmain[0]
 
                 rectangle_height = 1 * scale
-                rectangle_width = rectangle_height*(1/3)
+                rectangle_width = int(round(rectangle_height*0.4))
 
-                if rectangle_height >= (y3-y1):
-                    rectangle_height = (y3-y1)*0.9
+                if rectangle_height >= (y1-y3):
+                    rectangle_height = (y1-y3)*0.9
 
-                line1 = canvas.create_line(x, y1, x, y2-rectangle_height/2, fill="black", width=LINE_WIDTH)
+                line1 = canvas.create_line(x, y1, x, y2+rectangle_height/2, fill="black", width=LINE_WIDTH)
 
                 rect = canvas.create_rectangle(x - rectangle_width/2, y2-rectangle_height/2, x + rectangle_width/2, y2 + rectangle_height/2, outline="black", width=LINE_WIDTH)
 
-                line2 = canvas.create_line(x, y2 + rectangle_height/2, x, y3, fill="black", width=LINE_WIDTH)
+                line2 = canvas.create_line(x, y2 - rectangle_height/2, x, y3, fill="black", width=LINE_WIDTH)
+
+                print("punto y1",y1)
+                print("punto y2",y2)
+                print("punto y3",y3)
 
         canvas.elements.extend([line1, rect, line2])
     

@@ -527,6 +527,11 @@ class graphics_window():
 
         self.plot_containers = {}  # Diccionario para guardar los contenedores de gráficos
         self.figures = {}         # Diccionario para guardar las figuras
+
+        self.scroll_enabled = True
+        self.original_command = None
+        self.original_yview = None  # Para guardar el yview original
+        self.aux_scrollvar = False
         #---------------------------- Frames principales -------------------------------------------------------
 
         model_tab1.grid_rowconfigure(0, weight=1)
@@ -775,22 +780,55 @@ class graphics_window():
         self.scrollbar_item.yview_moveto(0)
         true_count = sum(self.array_to_filter)
 
+
         if true_count<14:
             self.toggle_scrollbar(True)
+            self.aux_scrollvar = True
         else:
             self.toggle_scrollbar(False)
-
-
-        print(true_count)
+            self.aux_scrollvar = False
         
+  
+
+
     def toggle_scrollbar(self, disable):
+        self.scroll_enabled = not disable
+        
         if disable:
-            self.scrollbar_item.unbind_all("<MouseWheel>")
-            self.scrollbar_bar.configure(state="disabled")
+            # Guardar comandos originales
+            if self.original_command is None:
+                self.original_command = self.scrollbar_bar.cget('command')
+                self.original_yview = self.scrollbar_item.yview
+            
+            # Deshabilitar scrollbar
+            self.scrollbar_bar.configure(command=lambda *args: None)
+            self.scrollbar_item.configure(yscrollcommand=lambda *args: None)
+            
+            # Deshabilitar scroll del canvas
+            def dummy_scroll(*args):
+                return "break"
+            
+            # Deshabilitar todos los métodos de scroll
+            self.scrollbar_item.bind_all("<MouseWheel>", dummy_scroll)
+            self.scrollbar_item.bind_all("<Button-4>", dummy_scroll)
+            self.scrollbar_item.bind_all("<Button-5>", dummy_scroll)
+            self.scrollbar_item.yview = dummy_scroll
+            
         else:
-            self.scrollbar_item.bind_all("<MouseWheel>", 
-                lambda e: self.scrollbar_item.yview_scroll(int(-1*(e.delta/30)), "units"))
-            self.scrollbar_bar.configure(state="normal")
+            # Restaurar comandos originales
+            if self.original_command is not None:
+                self.scrollbar_bar.configure(command=self.original_command)
+                self.scrollbar_item.configure(yscrollcommand=self.scrollbar_bar.set)
+                self.scrollbar_item.yview = self.original_yview
+            
+            def on_mouse_wheel(event):
+                self.scrollbar_item.yview_scroll(int(-1*(event.delta/30)), "units")
+                
+            self.scrollbar_item.bind_all("<MouseWheel>", on_mouse_wheel)
+            self.scrollbar_item.bind_all("<Button-4>", lambda e: self.scrollbar_item.yview_scroll(-1, "units"))
+            self.scrollbar_item.bind_all("<Button-5>", lambda e: self.scrollbar_item.yview_scroll(1, "units"))
+
+
 
     def checkbox_filter_all_clear(self,Litems, dropdowns_values_memory, all_frames_info, frames_datos, datos_main, datos_main_rows, datasets_labels):
 
@@ -809,6 +847,8 @@ class graphics_window():
 
             checkbox_toggle(all_frames_info[i],frames_datos,datos_main,datos_main_rows)
         
+        self.aux_scrollvar = False
+        self.toggle_scrollbar(False)
     #------------------------------------------------- scrollbar functions ----------------------------------------------
 
     def scrollbar_items(self, container, datasets, right_items):
@@ -1569,7 +1609,7 @@ class graphics_window():
         if graph_info[0]=="xy":
             self.create_xy_plot(graph_frame, datasets_y, graph_info[1], graph_info[2], var_domain[row], graph_info[5], graph_info[6])
 
-    def scrollbar_function(self, main_frame):
+    def scrollbar_function2(self, main_frame):
 
         height_value=250
 
@@ -1610,6 +1650,48 @@ class graphics_window():
 
         return second_frame,canvas
 
+    def scrollbar_function(self, main_frame):
+        height_value=250
+        
+        canvas = CTkCanvas(main_frame, bg=FIGURE_BACKGROUND_COLOR, highlightthickness=0)
+        canvas.grid(row=0, column=0, sticky="ns", padx=PADDING, pady=PADDING)
+
+        second_frame = CTkFrame(canvas)
+        scrollbar = CTkScrollbar(main_frame, orientation="vertical", command=canvas.yview)
+
+        self.scrollbar_item=canvas
+        self.scrollbar_bar=scrollbar
+        
+        scrollbar.grid(row=0, column=1, sticky="ns", padx=PADDING, pady=PADDING)
+
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.create_window((0,0), window=second_frame, anchor="nw")
+
+        # Modificar la función on_mouse_wheel para verificar aux_scrollvar
+        def on_mouse_wheel(event):
+            if not hasattr(self, 'aux_scrollvar') or not self.aux_scrollvar:
+                canvas.yview_scroll(int(-1*(event.delta/30)), "units")
+
+        # Modificar los bindings para verificar aux_scrollvar
+        def on_enter(event):
+            if not hasattr(self, 'aux_scrollvar') or not self.aux_scrollvar:
+                canvas.bind_all("<MouseWheel>", on_mouse_wheel)
+
+        def on_leave(event):
+            if not hasattr(self, 'aux_scrollvar') or not self.aux_scrollvar:
+                canvas.unbind_all("<MouseWheel>")
+
+        canvas.bind("<Enter>", on_enter)
+        canvas.bind("<Leave>", on_leave)
+
+        canvas.grid_rowconfigure(0, weight=1)
+        canvas.grid_columnconfigure(0, weight=1)
+
+        scrollbar.grid_rowconfigure(0, weight=1)
+        scrollbar.grid_columnconfigure(0, weight=0)
+
+        return second_frame,canvas
 
 
 import numpy as np
