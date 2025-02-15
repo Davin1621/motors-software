@@ -4,6 +4,7 @@ from tkinter import messagebox
 # Constants for padding
 LABEL_PADY = 10
 PADDING = 5
+LINE_WIDTH = 8  # Constant for line width
 
 class CanvasApp:
     def __init__(self, root):
@@ -19,6 +20,10 @@ class CanvasApp:
         self.canvas.bind("<Motion>", self.on_mouse_move)  # Bind mouse motion event
 
         self.canvas.elements = []   # List to store all elements
+        self.component_options = ["Select Component", "Resistor", "Inductor", "Capacitor", "Resistor3"]
+        self.len_component_options = len(self.component_options)
+
+        self.parameters_labels = ["point 1","point 2","point 3","orientation","scale"]
 
         
         self.coord_label = ctk.CTkLabel(self.root, text="")
@@ -59,28 +64,78 @@ class CanvasApp:
         popup = ctk.CTkToplevel(self.root)
         popup.title("Select Component")
         popup.attributes('-topmost', True)  # Ensure the popup is on top
-        popup.geometry("300x200")  # Define the dimensions of the popup
+        popup.geometry("300x700")  # Define the dimensions of the popup
         popup.grab_set()  # Configure grab_set to prevent interaction with other windows
 
-        coord_x = self.x_pos
-        coord_y = self.y_pos
+        coord_x = self.x_pos    #save the coordinates of the click
+        coord_y = self.y_pos    #save the coordinates of the click
 
+        label = ctk.CTkLabel(popup, text=f"X: {coord_x}, Y: {coord_y}")  #show the coordinates of the click
+
+        frame_paremeters=ctk.CTkFrame(popup)    #frame for parameters
+        #frame1=ctk.CTkFrame(frame_paremeters)
+        parameters_data = self.parameters_frames(frame_paremeters)
+        
+        component_dropdown = ctk.CTkComboBox(popup, values=self.component_options)
+        component_dropdown.set("Select Component")
+        component_dropdown.configure(command=lambda value: self.set_item_selected(value, parameters_data, frame_paremeters))
+
+        #select_button = ctk.CTkButton(popup, text="Select", command=lambda: [self.draw_component(coord_x, coord_y, component_var.get()), popup.destroy()])
+        select_button = ctk.CTkButton(popup, text="Select", command=lambda: self.draw_component(coord_x, coord_y, self.item_selected))
+        
+        
         popup.grid_columnconfigure(0, weight=1)  # Make the column expandable
-
-        label = ctk.CTkLabel(popup, text=f"X: {event.x}, Y: {event.y}")
         label.grid(row=0, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
-
-        component_var = ctk.StringVar(value="Select Component")
-        component_dropdown = ctk.CTkComboBox(popup, values=["Resistor", "Inductor", "Capacitor", "Resistor3"], variable=component_var)
         component_dropdown.grid(row=1, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
-
-        select_button = ctk.CTkButton(popup, text="Select", command=lambda: [self.draw_component(coord_x, coord_y, component_var.get()), popup.destroy()])
         select_button.grid(row=2, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
+        frame_paremeters.grid(row=3, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
+        #frame1.grid(row=0, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
+        frame_paremeters.grid_rowconfigure(0, weight=1)  # Make frame1 occupy all the space of its container
+        frame_paremeters.grid_columnconfigure(0, weight=1)  # Make frame1 occupy all the space of its container
 
-        close_button = ctk.CTkButton(popup, text="Close", command=popup.destroy)
-        close_button.grid(row=3, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
+        
+
+        
+
 
         self.created_dots.append([coord_x, coord_y])
+
+    def set_item_selected(self, value, parameters_data,frame_paremeters):
+        self.item_selected = value
+
+        for i in range(5):
+            frame_items = parameters_data[i]
+            frame_items[0].grid(row=i, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
+            
+            frame_items[0].grid_columnconfigure(0, weight=1)
+            frame_items[0].grid_columnconfigure(1, weight=1)
+            frame_items[0].grid_rowconfigure(i, weight=1)
+
+
+            frame_items[1].grid(row=0, column=0, pady=PADDING, padx=PADDING, sticky='w')
+            frame_items[2].grid(row=0, column=1, pady=PADDING, padx=PADDING, sticky='e')
+           
+
+
+        
+
+    def parameters_frames(self, frame_paremeters):
+        frames_parameters = []
+        for i in range(len(self.parameters_labels)):
+            frame_items =[]
+            frame_item = ctk.CTkFrame(frame_paremeters)
+            frame_item_label = ctk.CTkLabel(frame_item, text=self.parameters_labels[i])
+            frame_item_entry = ctk.CTkEntry(frame_item)
+
+            #frame_item.grid(row=i, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
+
+            frame_items.append(frame_item)
+            frame_items.append(frame_item_label)
+            frame_items.append(frame_item_entry)
+
+            frames_parameters.append(frame_items)
+
+        return frames_parameters
 
     def draw_component(self, x, y, component_type):
         # Puntos centrales del canvas ajustados al tamaño del canvas
@@ -128,9 +183,9 @@ class CanvasApp:
     def draw_resistor(self, canvas, p1, p2):
         x1, y1 = p1
         x2, y2 = p2
-        line1 = canvas.create_line(x1, y1, x1 + 5, y1, fill="black", width=2)
-        rect = canvas.create_rectangle(x1 + 5, y1 - 5, x1 + 15, y1 + 5, outline="black", width=2)
-        line2 = canvas.create_line(x1 + 15, y1, x2, y2, fill="black", width=2)
+        line1 = canvas.create_line(x1, y1, x1 + 5, y1, fill="black", width=LINE_WIDTH)
+        rect = canvas.create_rectangle(x1 + 5, y1 - 5, x1 + 15, y1 + 5, outline="black", width=LINE_WIDTH)
+        line2 = canvas.create_line(x1 + 15, y1, x2, y2, fill="black", width=LINE_WIDTH)
         canvas.elements.extend([line1, rect, line2])
 
     def draw_resistor3(self, canvas, pmain, coord_center, coord_final, orientation, scale):
@@ -156,11 +211,11 @@ class CanvasApp:
                 if rectangle_width >= (x3-x1):
                     rectangle_width = (x3-x1)*0.9
 
-                line1 = canvas.create_line(x1, y, x2-rectangle_width/2, y, fill="black", width=2)
+                line1 = canvas.create_line(x1, y, x2-rectangle_width/2, y, fill="black", width=LINE_WIDTH)
 
-                rect = canvas.create_rectangle(x2-rectangle_width/2, y - rectangle_height/2, x2 + rectangle_width/2, y + rectangle_height/2, outline="black", width=2)
+                rect = canvas.create_rectangle(x2-rectangle_width/2, y - rectangle_height/2, x2 + rectangle_width/2, y + rectangle_height/2, outline="black", width=LINE_WIDTH)
 
-                line2 = canvas.create_line(x2 + rectangle_width/2, y, x3, y, fill="black", width=2)
+                line2 = canvas.create_line(x2 + rectangle_width/2, y, x3, y, fill="black", width=LINE_WIDTH)
 
             case "vertical":
                 y1 = pmain[1]
@@ -175,31 +230,31 @@ class CanvasApp:
                 if rectangle_height >= (y3-y1):
                     rectangle_height = (y3-y1)*0.9
 
-                line1 = canvas.create_line(x, y1, x, y2-rectangle_height/2, fill="black", width=2)
+                line1 = canvas.create_line(x, y1, x, y2-rectangle_height/2, fill="black", width=LINE_WIDTH)
 
-                rect = canvas.create_rectangle(x - rectangle_width/2, y2-rectangle_height/2, x + rectangle_width/2, y2 + rectangle_height/2, outline="black", width=2)
+                rect = canvas.create_rectangle(x - rectangle_width/2, y2-rectangle_height/2, x + rectangle_width/2, y2 + rectangle_height/2, outline="black", width=LINE_WIDTH)
 
-                line2 = canvas.create_line(x, y2 + rectangle_height/2, x, y3, fill="black", width=2)
+                line2 = canvas.create_line(x, y2 + rectangle_height/2, x, y3, fill="black", width=LINE_WIDTH)
 
         canvas.elements.extend([line1, rect, line2])
     
     def draw_inductor(self, canvas, p1, p2):
         x1, y1 = p1
         x2, y2 = p2
-        line1 = canvas.create_line(x1, y1, x1 + 5, y1, fill="black", width=2)
-        arc1 = canvas.create_arc(x1 + 5, y1 - 5, x1 + 15, y1 + 5, start=0, extent=180, style='arc', outline="black", width=2)
-        arc2 = canvas.create_arc(x1 + 15, y1 - 5, x1 + 25, y1 + 5, start=0, extent=180, style='arc', outline="black", width=2)
-        arc3 = canvas.create_arc(x1 + 25, y1 - 5, x1 + 35, y1 + 5, start=0, extent=180, style='arc', outline="black", width=2)
-        line2 = canvas.create_line(x1 + 35, y1, x2, y2, fill="black", width=2)
+        line1 = canvas.create_line(x1, y1, x1 + 5, y1, fill="black", width=LINE_WIDTH)
+        arc1 = canvas.create_arc(x1 + 5, y1 - 5, x1 + 15, y1 + 5, start=0, extent=180, style='arc', outline="black", width=LINE_WIDTH)
+        arc2 = canvas.create_arc(x1 + 15, y1 - 5, x1 + 25, y1 + 5, start=0, extent=180, style='arc', outline="black", width=LINE_WIDTH)
+        arc3 = canvas.create_arc(x1 + 25, y1 - 5, x1 + 35, y1 + 5, start=0, extent=180, style='arc', outline="black", width=LINE_WIDTH)
+        line2 = canvas.create_line(x1 + 35, y1, x2, y2, fill="black", width=LINE_WIDTH)
         canvas.elements.extend([line1, arc1, arc2, arc3, line2])
 
     def draw_capacitor(self, canvas, p1, p2):
         x1, y1 = p1
         x2, y2 = p2
-        line1 = canvas.create_line(x1, y1, x1 + 15, y1, fill="black", width=2)
-        line2 = canvas.create_line(x1 + 15, y1 - 10, x1 + 15, y1 + 10, fill="black", width=2)
-        line3 = canvas.create_line(x1 + 25, y1 - 10, x1 + 25, y1 + 10, fill="black", width=2)
-        line4 = canvas.create_line(x1 + 25, y1, x2, y1, fill="black", width=2)
+        line1 = canvas.create_line(x1, y1, x1 + 15, y1, fill="black", width=LINE_WIDTH)
+        line2 = canvas.create_line(x1 + 15, y1 - 10, x1 + 15, y1 + 10, fill="black", width=LINE_WIDTH)
+        line3 = canvas.create_line(x1 + 25, y1 - 10, x1 + 25, y1 + 10, fill="black", width=LINE_WIDTH)
+        line4 = canvas.create_line(x1 + 25, y1, x2, y1, fill="black", width=LINE_WIDTH)
         canvas.elements.extend([line1, line2, line3, line4])
 
 if __name__ == "__main__":
