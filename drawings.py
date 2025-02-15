@@ -3,22 +3,27 @@ from tkinter import messagebox
 
 # Constants for padding
 LABEL_PADY = 10
-BUTTON_PADY = 5
+PADDING = 5
 
 class CanvasApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Single Canvas")
+        
         self.canvas = ctk.CTkCanvas(self.root, width=500, height=500, bg="SystemButtonFace", highlightthickness=1)
         self.canvas.pack()
-        self.canvas.bind("<Button-1>", self.on_canvas_click)
+
+        self.canvas.bind("<Button-1>", self.on_canvas_click)    # Bind click event
         self.canvas.bind("<Motion>", self.on_mouse_move)  # Bind mouse motion event
-        self.canvas.elements = []
+
+        self.canvas.elements = []   # List to store all elements
+
+        
         self.coord_label = ctk.CTkLabel(self.root, text="")
         self.coord_label.pack()
 
         self.log_button = ctk.CTkButton(self.root, text="Print Log", command=self.print_log)
-        self.log_button.pack(pady=BUTTON_PADY)
+        self.log_button.pack(pady=PADDING)
 
 
     def on_mouse_move(self, event):
@@ -28,20 +33,23 @@ class CanvasApp:
         popup = ctk.CTkToplevel(self.root)
         popup.title("Select Component")
         popup.attributes('-topmost', True)  # Ensure the popup is on top
+        popup.geometry("300x200")  # Define the dimensions of the popup
+        popup.grab_set()  # Configure grab_set to prevent interaction with other windows
+
+        popup.grid_columnconfigure(0, weight=1)  # Make the column expandable
 
         label = ctk.CTkLabel(popup, text=f"X: {event.x}, Y: {event.y}")
-        label.pack(pady=LABEL_PADY)
+        label.grid(row=0, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
 
         component_var = ctk.StringVar(value="Select Component")
         component_dropdown = ctk.CTkComboBox(popup, values=["Resistor", "Inductor", "Capacitor", "Resistor3"], variable=component_var)
-        component_dropdown.pack(pady=BUTTON_PADY)
+        component_dropdown.grid(row=1, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
 
-        select_button = ctk.CTkButton(popup, text="Select", 
-                                      command=lambda: [self.draw_component(event.x, event.y, component_var.get()), popup.destroy()])
-        select_button.pack(pady=BUTTON_PADY)
+        select_button = ctk.CTkButton(popup, text="Select", command=lambda: [self.draw_component(event.x, event.y, component_var.get()), popup.destroy()])
+        select_button.grid(row=2, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
 
         close_button = ctk.CTkButton(popup, text="Close", command=popup.destroy)
-        close_button.pack(pady=BUTTON_PADY)
+        close_button.grid(row=3, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
 
     def draw_component(self, x, y, component_type):
         # Puntos centrales del canvas ajustados al tamaño del canvas
