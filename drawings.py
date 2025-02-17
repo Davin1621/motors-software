@@ -339,7 +339,7 @@ class CanvasApp:
 
         #-----------------------------------------offset center feature-----------------------------------------
 
-        if offset_center == "":
+        if offset_center == "" or int(offset_center) == 0:
             offset_center_var = int(offset_final) * 0.5
             offset_final_var = int(offset_final) * 0.5
         else:
