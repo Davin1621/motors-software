@@ -1,5 +1,7 @@
 import customtkinter as ctk
 from tkinter import messagebox
+import math
+
 
 # Constants for padding
 LABEL_PADY = 10
@@ -86,7 +88,8 @@ class CanvasApp:
         #parameters_data[1][2].configure(state='disabled')
         
         component_dropdown = ctk.CTkComboBox(popup, values=self.component_options)
-        component_dropdown.set("Select Component")
+        component_dropdown.set(self.component_options[-1])
+        self.item_selected = component_dropdown.get()
         component_dropdown.configure(command=lambda value: self.set_item_selected(value))
 
         #select_button = ctk.CTkButton(popup, text="Select", command=lambda: [self.draw_component(coord_x, coord_y, component_var.get()), popup.destroy()])
@@ -108,8 +111,6 @@ class CanvasApp:
     def set_item_selected(self, value):
         self.item_selected = value
 
-        
-
     def position_parameters_frames(self, parameters_data):
         for i in range(len(self.parameters_labels)):
             frame_items = parameters_data[i]
@@ -127,9 +128,18 @@ class CanvasApp:
         frames_parameters = []
         for i in range(len(self.parameters_labels)):
             frame_items =[]
-            frame_item = ctk.CTkFrame(frame_paremeters)
-            frame_item_label = ctk.CTkLabel(frame_item, text=self.parameters_labels[i], justify='center')
-            frame_item_entry = ctk.CTkEntry(frame_item, justify='center')
+            if i == 3:
+                
+                frame_item = ctk.CTkFrame(frame_paremeters)
+                frame_item_label = ctk.CTkLabel(frame_item, text=self.parameters_labels[i], justify='center')
+                combo_options = ["N", "S", "E", "W"]
+                frame_item_entry = ctk.CTkComboBox(frame_item, values=combo_options)
+                frame_item_entry.set(combo_options[0])
+            else:
+                
+                frame_item = ctk.CTkFrame(frame_paremeters)
+                frame_item_label = ctk.CTkLabel(frame_item, text=self.parameters_labels[i], justify='center')
+                frame_item_entry = ctk.CTkEntry(frame_item, justify='center')
 
             frame_items.append(frame_item)
             frame_items.append(frame_item_label)
@@ -150,6 +160,8 @@ class CanvasApp:
         offset_point_3 = parameters_data[2][2].get()
         orientation = parameters_data[3][2].get()
         scale = parameters_data[4][2].get()
+
+        
 
         if component_type == "Resistor":
             message = f"self.draw_resistor(self.canvas, [{x1}, {y1}], [{x2}, {y2}])"
@@ -204,73 +216,255 @@ class CanvasApp:
         line2 = canvas.create_line(x1 + 15, y1, x2, y2, fill="black", width=LINE_WIDTH)
         canvas.elements.extend([line1, rect, line2])
 
-    def draw_resistor3(self, canvas, pmain, offset_center, offset_final, orientation, scale):
-        #default orientation is horizontal
+    def draw_resistor4(self, canvas, pmain, offset_center, offset_final, orientation, scale):
+
+
+        #-----------------------------------------offset center feature-----------------------------------------
 
         if offset_center == "c":
-            if orientation == "h":
-                offset_center_var = pmain[0] + (offset_final/2)
-                offset_final_var=offset_final + pmain[0]
-            elif orientation == "v":
-                offset_center_var = pmain[1] - (offset_final/2)
-                offset_final_var=pmain[1] - offset_final 
+            point_center_var = offset_final*0.5
 
         else:
-            offset_center_var = int(offset_center)
-            offset_final_var = offset_final+offset_center_var+pmain[0]
+            if int(offset_center) >= int(offset_final):
+                point_center_var = int(offset_final * 0.9)
+                print("-----------------------------------------maximum offset center reached-----------------------------------------")
+            else:
+                point_center_var = int(offset_center)
 
-
+        #-----------------------------------------coordinates definition-----------------------------------------
 
         match orientation:
-            case "h":
-                x1 = pmain[0]
-                x2 = offset_center_var
-                x3 = offset_final_var
-
-                y=pmain[1]
-
-                rectangle_width = 1 * scale
-                rectangle_height = int(round(rectangle_width * 0.4))
-
-                
-
-                if rectangle_width >= (x3-x1):
-                    rectangle_width = (x3-x1)*0.9
-
-                line1 = canvas.create_line(x1, y, x2-rectangle_width/2, y, fill="black", width=LINE_WIDTH)
-
-                rect = canvas.create_rectangle(x2-rectangle_width/2, y - rectangle_height/2, x2 + rectangle_width/2, y + rectangle_height/2, outline="black", width=LINE_WIDTH)
-
-                line2 = canvas.create_line(x2 + rectangle_width/2, y, x3, y, fill="black", width=LINE_WIDTH)
-
-                print("punto x1",x1)
-                print("punto x2",x2)
-                print("punto x3",x3)
-
-            case "v":
+            case "N":
                 y1 = pmain[1]
-                y2 = offset_center_var
-                y3 = offset_final_var
+                y2 = pmain[1] - point_center_var
+                y3 = pmain[1] - int(offset_final)
 
-                x=pmain[0]
+                x = pmain[0]
+                x3 = x
+            case "S":
+                y1 = pmain[1]
+                y2 = pmain[1] + point_center_var
+                y3 = pmain[1] + int(offset_final)
 
-                rectangle_height = 1 * scale
-                rectangle_width = int(round(rectangle_height*0.4))
+                x = pmain[0]
+                x3 = x
+            case "E":
+                x1 = pmain[0]
+                x2 = pmain[0] + point_center_var
+                x3 = pmain[0] + int(offset_final)
 
-                if rectangle_height >= (y1-y3):
-                    rectangle_height = (y1-y3)*0.9
+                y = pmain[1]
+                y3 = y
+            case "W":
+                x1 = pmain[0]
+                x2 = pmain[0] - point_center_var
+                x3 = pmain[0] - int(offset_final)
 
-                line1 = canvas.create_line(x, y1, x, y2+rectangle_height/2, fill="black", width=LINE_WIDTH)
+                y = pmain[1]
+                y3 = y
 
-                rect = canvas.create_rectangle(x - rectangle_width/2, y2-rectangle_height/2, x + rectangle_width/2, y2 + rectangle_height/2, outline="black", width=LINE_WIDTH)
+        self.created_dots.append([x3,y3])
 
-                line2 = canvas.create_line(x, y2 - rectangle_height/2, x, y3, fill="black", width=LINE_WIDTH)
+        #-----------------------------------------rectangle size definition-----------------------------------------
 
-                print("punto y1",y1)
-                print("punto y2",y2)
-                print("punto y3",y3)
+        if orientation == "E" or orientation == "W":
+            
+            rectangle_width = 1 * scale
+            rectangle_height = int(round(rectangle_width * 0.4))
+            
+            if rectangle_width >= abs(x3-x1):
+                rectangle_width = abs(x3-x1)*0.9
+                print("-----------------------------------------maximum total width available-----------------------------------------")
+
+            if offset_center != "c" and (rectangle_width*0.5 >= abs(y2-y1) or rectangle_width*0.5 >= abs(y3-y2)):
+                if abs(y3-y2) > abs(y2-y1):
+                    rectangle_width = abs(y2-y1)*0.9
+
+                if abs(y2-y1) > abs(y3-y2):
+                    rectangle_width = abs(y3-y2)*0.9
+
+                print("-----------------------------------------maximum width to one side available-----------------------------------------")
+
+        if orientation == "N" or orientation == "S":
+            
+            rectangle_height = 1 * scale
+            rectangle_width = int(round(rectangle_height * 0.4))
+
+            if rectangle_height >= abs(y3-y1):
+                rectangle_height = abs(y3-y1)*0.9
+                print("-----------------------------------------maximum total height reached-----------------------------------------")            
+
+            if offset_center != "c" and (rectangle_height*0.5 >= abs(y2-y1) or rectangle_height*0.5 >= abs(y3-y2)):
+                if abs(y3-y2) > abs(y2-y1):
+                    rectangle_height = abs(y2-y1)*0.9
+
+                if abs(y2-y1) > abs(y3-y2):
+                    rectangle_height = abs(y3-y2)*0.9
+
+                print("-----------------------------------------maximum height to one side available-----------------------------------------")
+
+        aux_sign_h = 1  #only for rectangle dimensions
+        aux_sign_v = 1  #only for rectangle dimensions
+
+        match orientation:
+            case "E" | "W":
+
+                if orientation == "W":
+                    aux_sign_h = -1
+
+                line1 = canvas.create_line(x1, y, x2 - aux_sign_h * rectangle_width/2, y, fill="black", width=LINE_WIDTH)
+
+                rect = canvas.create_rectangle(x2-aux_sign_h * rectangle_width/2, y - aux_sign_h * rectangle_height/2,
+                                                x2 + aux_sign_h * rectangle_width/2, y + aux_sign_h * rectangle_height/2,
+                                                  outline="black", width=LINE_WIDTH)
+
+                line2 = canvas.create_line(x2 + aux_sign_h * rectangle_width/2, y, x3, y, fill="black", width=LINE_WIDTH)
+
+            case "N" | "S":
+
+                if orientation == "N":
+                    aux_sign_v = -1
+
+                line1 = canvas.create_line(x, y1, x, y2 - aux_sign_v * rectangle_height/2, fill="black", width=LINE_WIDTH)
+
+                rect = canvas.create_rectangle(x - aux_sign_v * rectangle_width/2, y2 - aux_sign_v * rectangle_height/2,
+                                                x + aux_sign_v * rectangle_width/2, y2 + aux_sign_v * rectangle_height/2,
+                                                  outline="black", width=LINE_WIDTH)
+
+                line2 = canvas.create_line(x, y2 + aux_sign_v * rectangle_height/2, x, y3, fill="black", width=LINE_WIDTH)
 
         canvas.elements.extend([line1, rect, line2])
+
+    def draw_resistor3(self, canvas, pmain, offset_center, offset_final, orientation, scale):
+
+        #-----------------------------------------offset center feature-----------------------------------------
+
+        if offset_center == "":
+            offset_center_var = int(offset_final) * 0.5
+            offset_final_var = int(offset_final) * 0.5
+        else:
+            offset_center_var = int(offset_center)
+            offset_final_var = int(offset_final)
+
+        #-------------------------------------------points definition-----------------------------------------
+
+
+        p_start = pmain
+        p_ref_center = [p_start[0] + offset_center_var, p_start[1]]  # center of rectangle
+        p_ref_final = [p_start[0] + offset_final_var + offset_center_var, p_start[1]]
+
+        #-------------------------------------------rectangle size definition-----------------------------------------
+
+        ASPECT_RATIO = 0.4
+        MIN_WIDTH = 10
+
+        if scale == "":
+            rectangle_width = MIN_WIDTH
+        else:
+            rectangle_width = int(round(scale))
+
+        if rectangle_width >= 0.9 *abs(p_ref_center[0] - p_start[0]) or rectangle_width >= 0.9 * abs(p_ref_center[0] - p_ref_final[0]):
+            if abs(p_ref_center[0] - p_start[0]) > abs(p_ref_center[0] - p_ref_final[0]):
+                rectangle_width = abs(p_ref_center[0] - p_ref_final[0])*0.9
+            else:
+                rectangle_width = abs(p_ref_center[0] - p_start[0])*0.9
+
+            print("-----------------------------------------maximum size reached, check scale-----------------------------------------")
+
+        rectangle_height = int(round(rectangle_width * ASPECT_RATIO))
+
+        #-------------------------------------------rectangle points definition-----------------------------------------
+
+        p_ref_start_rectangle =[ p_ref_center[0] - rectangle_width, p_start[1]]   #start of rectangle
+
+        p_ref_corner_1 = [p_ref_center[0] - rectangle_width, p_ref_center[1] + rectangle_height] #first corner of rectangle
+        p_ref_corner_2 = [p_ref_center[0] + rectangle_width, p_ref_center[1] - rectangle_height] #second corner of rectangle
+
+        p_ref_end_rectangle =[ p_ref_center[0] + rectangle_width, p_start[1]]   #end of rectangle
+
+        match orientation:
+            case "N":
+                ANGLE = 270
+                p_center = self.rotate_point(p_start, p_ref_center, ANGLE)
+                p_final = self.rotate_point(p_start, p_ref_final, ANGLE)
+                
+                p_start_rectangle = self.rotate_point(p_start, p_ref_start_rectangle, ANGLE)
+                p_corner_1 = self.rotate_point(p_start, p_ref_corner_1, ANGLE)
+                p_corner_2 = self.rotate_point(p_start, p_ref_corner_2, ANGLE)
+                p_end_rectangle = self.rotate_point(p_start, p_ref_end_rectangle, ANGLE)        
+
+            case "S":
+                ANGLE = 90
+                p_center = self.rotate_point(p_start, p_ref_center, ANGLE)
+                p_final = self.rotate_point(p_start, p_ref_final, ANGLE)
+                
+                p_start_rectangle = self.rotate_point(p_start, p_ref_start_rectangle, ANGLE)
+                p_corner_1 = self.rotate_point(p_start, p_ref_corner_1, ANGLE)
+                p_corner_2 = self.rotate_point(p_start, p_ref_corner_2, ANGLE)
+                p_end_rectangle = self.rotate_point(p_start, p_ref_end_rectangle, ANGLE)        
+
+            case "E":
+                ANGLE = 0
+                p_center = self.rotate_point(p_start, p_ref_center, ANGLE)
+                p_final = self.rotate_point(p_start, p_ref_final, ANGLE)
+                
+                p_start_rectangle = self.rotate_point(p_start, p_ref_start_rectangle, ANGLE)
+                p_corner_1 = self.rotate_point(p_start, p_ref_corner_1, ANGLE)
+                p_corner_2 = self.rotate_point(p_start, p_ref_corner_2, ANGLE)
+                p_end_rectangle = self.rotate_point(p_start, p_ref_end_rectangle, ANGLE)        
+
+            case "W":
+                ANGLE = 180
+                p_center = self.rotate_point(p_start, p_ref_center, ANGLE)
+                p_final = self.rotate_point(p_start, p_ref_final, ANGLE)
+                
+                p_start_rectangle = self.rotate_point(p_start, p_ref_start_rectangle, ANGLE)
+                p_corner_1 = self.rotate_point(p_start, p_ref_corner_1, ANGLE)
+                p_corner_2 = self.rotate_point(p_start, p_ref_corner_2, ANGLE)
+                p_end_rectangle = self.rotate_point(p_start, p_ref_end_rectangle, ANGLE)        
+                
+
+
+        x1, y1 = p_start
+        x2, y2 = p_start_rectangle
+        x3, y3 = p_corner_1
+        x4, y4 = p_center
+        x5, y5 = p_corner_2
+        x6, y6 = p_end_rectangle
+        x7, y7 = p_final
+
+        self.created_dots.append(p_final)
+
+
+        line1 = canvas.create_line(x1, y1, x2, y2, fill="black", width=LINE_WIDTH)
+
+        rect = canvas.create_rectangle(x3, y3, x5, y5,outline="black", width=LINE_WIDTH)
+
+        line2 = canvas.create_line(x6, y6, x7, y7, fill="black", width=LINE_WIDTH)
+
+        canvas.elements.extend([line1, rect, line2])
+
+    def rotate_point(self, p1, p2, rotation):
+        
+        x1, y1 = p1
+        x2, y2 = p2
+
+        # Convert rotation angle to radians
+        theta = math.radians(rotation)
+
+        # Translate point p2 to origin
+        translated_x = x2 - x1
+        translated_y = y2 - y1
+
+        # Rotate point
+        rotated_x = translated_x * math.cos(theta) - translated_y * math.sin(theta)
+        rotated_y = translated_x * math.sin(theta) + translated_y * math.cos(theta)
+
+        # Translate point back
+        new_x2 = rotated_x + x1
+        new_y2 = rotated_y + y1
+
+        return [new_x2, new_y2]
     
     def draw_inductor(self, canvas, p1, p2):
         x1, y1 = p1
