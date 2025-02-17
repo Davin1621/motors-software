@@ -169,15 +169,15 @@ class CanvasApp:
             self.log_message(message)
             self.draw_resistor(self.canvas, [x1, y1], [x2, y2])
         elif component_type == "Inductor":
-            message = f"self.draw_inductor(self.canvas, [{x1}, {y1}], [{x2}, {y2}])"
+            message = f"self.draw_inductor(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
             print(message)
             self.log_message(message)
-            self.draw_inductor(self.canvas, [x1, y1], [x2, y2])
+            self.draw_inductor(self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale)
         elif component_type == "Capacitor":
-            message = f"self.draw_capacitor(self.canvas, [{x1}, {y1}], [{x2}, {y2}])"
+            message = f"self.draw_capacitor(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
             print(message)
             self.log_message(message)
-            self.draw_capacitor(self.canvas, point_1, [x2, y2])
+            self.draw_capacitor(self.canvas, point_1, offset_point_2, offset_point_3, orientation, scale)
         elif component_type == "Resistor3":
             message = f"self.draw_resistor3(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
             print(message)
@@ -216,125 +216,6 @@ class CanvasApp:
         line2 = canvas.create_line(x1 + 15, y1, x2, y2, fill="black", width=LINE_WIDTH)
         canvas.elements.extend([line1, rect, line2])
 
-    def draw_resistor4(self, canvas, pmain, offset_center, offset_final, orientation, scale):
-
-
-        #-----------------------------------------offset center feature-----------------------------------------
-
-        if offset_center == "c":
-            point_center_var = offset_final*0.5
-
-        else:
-            if int(offset_center) >= int(offset_final):
-                point_center_var = int(offset_final * 0.9)
-                print("-----------------------------------------maximum offset center reached-----------------------------------------")
-            else:
-                point_center_var = int(offset_center)
-
-        #-----------------------------------------coordinates definition-----------------------------------------
-
-        match orientation:
-            case "N":
-                y1 = pmain[1]
-                y2 = pmain[1] - point_center_var
-                y3 = pmain[1] - int(offset_final)
-
-                x = pmain[0]
-                x3 = x
-            case "S":
-                y1 = pmain[1]
-                y2 = pmain[1] + point_center_var
-                y3 = pmain[1] + int(offset_final)
-
-                x = pmain[0]
-                x3 = x
-            case "E":
-                x1 = pmain[0]
-                x2 = pmain[0] + point_center_var
-                x3 = pmain[0] + int(offset_final)
-
-                y = pmain[1]
-                y3 = y
-            case "W":
-                x1 = pmain[0]
-                x2 = pmain[0] - point_center_var
-                x3 = pmain[0] - int(offset_final)
-
-                y = pmain[1]
-                y3 = y
-
-        self.created_dots.append([x3,y3])
-
-        #-----------------------------------------rectangle size definition-----------------------------------------
-
-        if orientation == "E" or orientation == "W":
-            
-            rectangle_width = 1 * scale
-            rectangle_height = int(round(rectangle_width * 0.4))
-            
-            if rectangle_width >= abs(x3-x1):
-                rectangle_width = abs(x3-x1)*0.9
-                print("-----------------------------------------maximum total width available-----------------------------------------")
-
-            if offset_center != "c" and (rectangle_width*0.5 >= abs(y2-y1) or rectangle_width*0.5 >= abs(y3-y2)):
-                if abs(y3-y2) > abs(y2-y1):
-                    rectangle_width = abs(y2-y1)*0.9
-
-                if abs(y2-y1) > abs(y3-y2):
-                    rectangle_width = abs(y3-y2)*0.9
-
-                print("-----------------------------------------maximum width to one side available-----------------------------------------")
-
-        if orientation == "N" or orientation == "S":
-            
-            rectangle_height = 1 * scale
-            rectangle_width = int(round(rectangle_height * 0.4))
-
-            if rectangle_height >= abs(y3-y1):
-                rectangle_height = abs(y3-y1)*0.9
-                print("-----------------------------------------maximum total height reached-----------------------------------------")            
-
-            if offset_center != "c" and (rectangle_height*0.5 >= abs(y2-y1) or rectangle_height*0.5 >= abs(y3-y2)):
-                if abs(y3-y2) > abs(y2-y1):
-                    rectangle_height = abs(y2-y1)*0.9
-
-                if abs(y2-y1) > abs(y3-y2):
-                    rectangle_height = abs(y3-y2)*0.9
-
-                print("-----------------------------------------maximum height to one side available-----------------------------------------")
-
-        aux_sign_h = 1  #only for rectangle dimensions
-        aux_sign_v = 1  #only for rectangle dimensions
-
-        match orientation:
-            case "E" | "W":
-
-                if orientation == "W":
-                    aux_sign_h = -1
-
-                line1 = canvas.create_line(x1, y, x2 - aux_sign_h * rectangle_width/2, y, fill="black", width=LINE_WIDTH)
-
-                rect = canvas.create_rectangle(x2-aux_sign_h * rectangle_width/2, y - aux_sign_h * rectangle_height/2,
-                                                x2 + aux_sign_h * rectangle_width/2, y + aux_sign_h * rectangle_height/2,
-                                                  outline="black", width=LINE_WIDTH)
-
-                line2 = canvas.create_line(x2 + aux_sign_h * rectangle_width/2, y, x3, y, fill="black", width=LINE_WIDTH)
-
-            case "N" | "S":
-
-                if orientation == "N":
-                    aux_sign_v = -1
-
-                line1 = canvas.create_line(x, y1, x, y2 - aux_sign_v * rectangle_height/2, fill="black", width=LINE_WIDTH)
-
-                rect = canvas.create_rectangle(x - aux_sign_v * rectangle_width/2, y2 - aux_sign_v * rectangle_height/2,
-                                                x + aux_sign_v * rectangle_width/2, y2 + aux_sign_v * rectangle_height/2,
-                                                  outline="black", width=LINE_WIDTH)
-
-                line2 = canvas.create_line(x, y2 + aux_sign_v * rectangle_height/2, x, y3, fill="black", width=LINE_WIDTH)
-
-        canvas.elements.extend([line1, rect, line2])
-
     def draw_resistor3(self, canvas, pmain, offset_center, offset_final, orientation, scale):
 
         #-----------------------------------------offset center feature-----------------------------------------
@@ -363,11 +244,11 @@ class CanvasApp:
         else:
             rectangle_width = int(round(scale))
 
-        if rectangle_width >= 0.9 *abs(p_ref_center[0] - p_start[0]) or rectangle_width >= 0.9 * abs(p_ref_center[0] - p_ref_final[0]):
+        if rectangle_width * 0.5>= 0.9 *abs(p_ref_center[0] - p_start[0]) or rectangle_width * 0.5 >= 0.9 * abs(p_ref_center[0] - p_ref_final[0]):
             if abs(p_ref_center[0] - p_start[0]) > abs(p_ref_center[0] - p_ref_final[0]):
-                rectangle_width = abs(p_ref_center[0] - p_ref_final[0])*0.9
+                rectangle_width = abs(p_ref_center[0] - p_ref_final[0])* 0.9 * 2
             else:
-                rectangle_width = abs(p_ref_center[0] - p_start[0])*0.9
+                rectangle_width = abs(p_ref_center[0] - p_start[0]) * 0.9 * 2
 
             print("-----------------------------------------maximum size reached, check scale-----------------------------------------")
 
@@ -466,23 +347,219 @@ class CanvasApp:
 
         return [new_x2, new_y2]
     
-    def draw_inductor(self, canvas, p1, p2):
-        x1, y1 = p1
-        x2, y2 = p2
-        line1 = canvas.create_line(x1, y1, x1 + 5, y1, fill="black", width=LINE_WIDTH)
-        arc1 = canvas.create_arc(x1 + 5, y1 - 5, x1 + 15, y1 + 5, start=0, extent=180, style='arc', outline="black", width=LINE_WIDTH)
-        arc2 = canvas.create_arc(x1 + 15, y1 - 5, x1 + 25, y1 + 5, start=0, extent=180, style='arc', outline="black", width=LINE_WIDTH)
-        arc3 = canvas.create_arc(x1 + 25, y1 - 5, x1 + 35, y1 + 5, start=0, extent=180, style='arc', outline="black", width=LINE_WIDTH)
-        line2 = canvas.create_line(x1 + 35, y1, x2, y2, fill="black", width=LINE_WIDTH)
+    def draw_inductor(self, canvas, pmain, offset_center, offset_final, orientation, scale):
+        
+        #-----------------------------------------offset center feature-----------------------------------------
+
+        if offset_center == "" or int(offset_center) == 0:
+            offset_center_var = int(offset_final) * 0.5
+            offset_final_var = int(offset_final) * 0.5
+        else:
+            offset_center_var = int(offset_center)
+            offset_final_var = int(offset_final)
+
+        #-------------------------------------------points definition-----------------------------------------
+
+
+        p_start = pmain
+        p_ref_center = [p_start[0] + offset_center_var, p_start[1]]  # center of rectangle
+        p_ref_end = [p_start[0] + offset_final_var + offset_center_var, p_start[1]]
+
+        width_arc = int(scale)
+
+        if width_arc * 1.5 >= 0.9 *abs(p_ref_center[0] - p_start[0]) or width_arc * 1.5 >= 0.9 * abs(p_ref_center[0] - p_ref_end[0]):
+            if abs(p_ref_center[0] - p_start[0]) > abs(p_ref_center[0] - p_ref_end[0]):
+                width_arc = abs(p_ref_center[0] - p_ref_end[0]) * 0.9 * (2/3)   
+            else:
+                width_arc = abs(p_ref_center[0] - p_start[0]) * 0.9 * (2/3)
+
+            print("-----------------------------------------maximum size reached, check scale-----------------------------------------")
+
+        p_ref_start_fig = [p_ref_center[0] - width_arc * 1.5, p_start[1]]
+
+        p_ref_init_arc_1 = [p_ref_center[0] - width_arc * 1.5, p_ref_center[1] + width_arc * 0.5]
+        p_ref_end_arc_1 = [p_ref_center[0] - width_arc * 0.5, p_ref_center[1] - width_arc * 0.5]
+
+        p_ref_init_arc_2 = [p_ref_center[0] - width_arc * 0.5, p_ref_center[1] + width_arc * 0.5]
+        p_ref_end_arc_2 = [p_ref_center[0] + width_arc * 0.5, p_ref_center[1] - width_arc * 0.5]
+        
+        p_ref_init_arc_3 = [p_ref_center[0] + width_arc * 0.5, p_ref_center[1] + width_arc * 0.5]
+        p_ref_end_arc_3 = [p_ref_center[0] + width_arc * 1.5, p_ref_center[1] - width_arc * 0.5]
+        
+        p_ref_end_fig = [p_ref_center[0] + width_arc * 1.5, p_ref_end[1]]
+
+        match orientation:
+            case "N":
+                ANGLE = 270
+                p_start_fig = self.rotate_point(p_start, p_ref_start_fig, ANGLE)
+                p_init_arc_1 = self.rotate_point(p_start, p_ref_init_arc_1, ANGLE)
+                p_end_arc_1 = self.rotate_point(p_start, p_ref_end_arc_1, ANGLE)
+                p_init_arc_2 = self.rotate_point(p_start, p_ref_init_arc_2, ANGLE)
+                p_end_arc_2 = self.rotate_point(p_start, p_ref_end_arc_2, ANGLE)
+                p_init_arc_3 = self.rotate_point(p_start, p_ref_init_arc_3, ANGLE)
+                p_end_arc_3 = self.rotate_point(p_start, p_ref_end_arc_3, ANGLE)
+                p_end_fig = self.rotate_point(p_start, p_ref_end_fig, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+
+                arc_angle = 270
+            case "S":
+                ANGLE = 90
+                p_start_fig = self.rotate_point(p_start, p_ref_start_fig, ANGLE)
+                p_init_arc_1 = self.rotate_point(p_start, p_ref_init_arc_1, ANGLE)
+                p_end_arc_1 = self.rotate_point(p_start, p_ref_end_arc_1, ANGLE)
+                p_init_arc_2 = self.rotate_point(p_start, p_ref_init_arc_2, ANGLE)
+                p_end_arc_2 = self.rotate_point(p_start, p_ref_end_arc_2, ANGLE)
+                p_init_arc_3 = self.rotate_point(p_start, p_ref_init_arc_3, ANGLE)
+                p_end_arc_3 = self.rotate_point(p_start, p_ref_end_arc_3, ANGLE)
+                p_end_fig = self.rotate_point(p_start, p_ref_end_fig, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+
+                arc_angle = 270
+            case "E":
+                ANGLE = 0
+                p_start_fig = self.rotate_point(p_start, p_ref_start_fig, ANGLE)
+                p_init_arc_1 = self.rotate_point(p_start, p_ref_init_arc_1, ANGLE)
+                p_end_arc_1 = self.rotate_point(p_start, p_ref_end_arc_1, ANGLE)
+                p_init_arc_2 = self.rotate_point(p_start, p_ref_init_arc_2, ANGLE)
+                p_end_arc_2 = self.rotate_point(p_start, p_ref_end_arc_2, ANGLE)
+                p_init_arc_3 = self.rotate_point(p_start, p_ref_init_arc_3, ANGLE)
+                p_end_arc_3 = self.rotate_point(p_start, p_ref_end_arc_3, ANGLE)
+                p_end_fig = self.rotate_point(p_start, p_ref_end_fig, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+
+                arc_angle = 0
+            case "W":
+                ANGLE = 180
+                p_start_fig = self.rotate_point(p_start, p_ref_start_fig, ANGLE)
+                p_init_arc_1 = self.rotate_point(p_start, p_ref_init_arc_1, ANGLE)
+                p_end_arc_1 = self.rotate_point(p_start, p_ref_end_arc_1, ANGLE)
+                p_init_arc_2 = self.rotate_point(p_start, p_ref_init_arc_2, ANGLE)
+                p_end_arc_2 = self.rotate_point(p_start, p_ref_end_arc_2, ANGLE)
+                p_init_arc_3 = self.rotate_point(p_start, p_ref_init_arc_3, ANGLE)
+                p_end_arc_3 = self.rotate_point(p_start, p_ref_end_arc_3, ANGLE)
+                p_end_fig = self.rotate_point(p_start, p_ref_end_fig, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+
+                arc_angle = 0
+
+        x1, y1 = p_start
+        x2, y2 = p_start_fig
+        x3, y3 = p_init_arc_1
+        x4, y4 = p_end_arc_1
+        x5, y5 = p_init_arc_2
+        x6, y6 = p_end_arc_2
+        x7, y7 = p_init_arc_3
+        x8, y8 = p_end_arc_3
+        x9, y9 = p_end_fig
+        x10, y10 = p_end
+
+        self.created_dots.append(p_end)
+
+        line1 = canvas.create_line(x1, y1, x2, y2, fill="black", width=LINE_WIDTH)
+        arc1 = canvas.create_arc(x3, y3, x4, y4, start=arc_angle, extent=180, style='arc', outline="black", width=LINE_WIDTH)
+        arc2 = canvas.create_arc(x5, y5, x6, y6, start=arc_angle, extent=180, style='arc', outline="black", width=LINE_WIDTH)
+        arc3 = canvas.create_arc(x7, y7, x8, y8, start=arc_angle, extent=180, style='arc', outline="black", width=LINE_WIDTH)
+        line2 = canvas.create_line(x9, y9, x10, y10, fill="black", width=LINE_WIDTH)
+
         canvas.elements.extend([line1, arc1, arc2, arc3, line2])
 
-    def draw_capacitor(self, canvas, p1, p2):
-        x1, y1 = p1
-        x2, y2 = p2
-        line1 = canvas.create_line(x1, y1, x1 + 15, y1, fill="black", width=LINE_WIDTH)
-        line2 = canvas.create_line(x1 + 15, y1 - 10, x1 + 15, y1 + 10, fill="black", width=LINE_WIDTH)
-        line3 = canvas.create_line(x1 + 25, y1 - 10, x1 + 25, y1 + 10, fill="black", width=LINE_WIDTH)
-        line4 = canvas.create_line(x1 + 25, y1, x2, y1, fill="black", width=LINE_WIDTH)
+    def draw_capacitor(self, canvas, pmain, offset_center, offset_final, orientation, scale):
+        
+
+        #-----------------------------------------offset center feature-----------------------------------------
+
+        if offset_center == "" or int(offset_center) == 0:
+            offset_center_var = int(offset_final) * 0.5
+            offset_final_var = int(offset_final) * 0.5
+        else:
+            offset_center_var = int(offset_center)
+            offset_final_var = int(offset_final)
+
+        #-------------------------------------------points definition-----------------------------------------
+
+
+        p_start = pmain
+        p_ref_center = [p_start[0] + offset_center_var, p_start[1]]  # center of rectangle
+        p_ref_end = [p_start[0] + offset_final_var + offset_center_var, p_start[1]]
+
+        MIN_WIDTH_CAPACITOR = 10
+
+        if scale == "":
+            width_capacitor = MIN_WIDTH_CAPACITOR
+        else:
+            width_capacitor = int(scale)
+
+        if width_capacitor * 1.5 >= 0.9 *abs(p_ref_center[0] - p_start[0]) or width_capacitor * 1.5 >= 0.9 * abs(p_ref_center[0] - p_ref_end[0]):
+            if abs(p_ref_center[0] - p_start[0]) > abs(p_ref_center[0] - p_ref_end[0]):
+                width_capacitor = abs(p_ref_center[0] - p_ref_end[0]) * 0.9 * (2/3)   
+            else:
+                width_capacitor = abs(p_ref_center[0] - p_start[0]) * 0.9 * (2/3)
+
+            print("-----------------------------------------maximum size reached, check scale-----------------------------------------")
+
+        height_capacitor = width_capacitor * 4
+        #-------------------------------------------points definition-----------------------------------------
+
+        p_ref_start_fig = [p_ref_center[0] - width_capacitor * 0.5, p_start[1]]
+        p_ref_line_1_start = [p_ref_center[0] - width_capacitor * 0.5, p_ref_center[1] - height_capacitor * 0.5]
+        p_ref_line_1_end = [p_ref_center[0] - width_capacitor * 0.5, p_ref_center[1] + height_capacitor * 0.5]
+        p_ref_line_2_start = [p_ref_center[0] + width_capacitor * 0.5, p_ref_center[1] - height_capacitor * 0.5]
+        p_ref_line_2_end = [p_ref_center[0] + width_capacitor * 0.5, p_ref_center[1] + height_capacitor * 0.5]
+        p_ref_end_fig = [p_ref_center[0] + width_capacitor * 0.5, p_ref_end[1]]
+
+
+        match orientation:
+            case "N":
+                ANGLE = 270
+                p_start_fig = self.rotate_point(p_start, p_ref_start_fig, ANGLE)
+                p_line_1_start = self.rotate_point(p_start, p_ref_line_1_start, ANGLE)
+                p_line_1_end = self.rotate_point(p_start, p_ref_line_1_end, ANGLE)
+                p_line_2_start = self.rotate_point(p_start, p_ref_line_2_start, ANGLE)
+                p_line_2_end = self.rotate_point(p_start, p_ref_line_2_end, ANGLE)
+                p_end_fig = self.rotate_point(p_start, p_ref_end_fig, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+            case "S":
+                ANGLE = 90
+                p_start_fig = self.rotate_point(p_start, p_ref_start_fig, ANGLE)
+                p_line_1_start = self.rotate_point(p_start, p_ref_line_1_start, ANGLE)
+                p_line_1_end = self.rotate_point(p_start, p_ref_line_1_end, ANGLE)
+                p_line_2_start = self.rotate_point(p_start, p_ref_line_2_start, ANGLE)
+                p_line_2_end = self.rotate_point(p_start, p_ref_line_2_end, ANGLE)
+                p_end_fig = self.rotate_point(p_start, p_ref_end_fig, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+            case "E":
+                ANGLE = 0
+                p_start_fig = self.rotate_point(p_start, p_ref_start_fig, ANGLE)
+                p_line_1_start = self.rotate_point(p_start, p_ref_line_1_start, ANGLE)
+                p_line_1_end = self.rotate_point(p_start, p_ref_line_1_end, ANGLE)
+                p_line_2_start = self.rotate_point(p_start, p_ref_line_2_start, ANGLE)
+                p_line_2_end = self.rotate_point(p_start, p_ref_line_2_end, ANGLE)
+                p_end_fig = self.rotate_point(p_start, p_ref_end_fig, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+            case "W":
+                ANGLE = 180
+                p_start_fig = self.rotate_point(p_start, p_ref_start_fig, ANGLE)
+                p_line_1_start = self.rotate_point(p_start, p_ref_line_1_start, ANGLE)
+                p_line_1_end = self.rotate_point(p_start, p_ref_line_1_end, ANGLE)
+                p_line_2_start = self.rotate_point(p_start, p_ref_line_2_start, ANGLE)
+                p_line_2_end = self.rotate_point(p_start, p_ref_line_2_end, ANGLE)
+                p_end_fig = self.rotate_point(p_start, p_ref_end_fig, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+
+
+        x1, y1 = p_start
+        x2, y2 = p_start_fig
+        x3, y3 = p_line_1_start
+        x4, y4 = p_line_1_end
+        x5, y5 = p_line_2_start
+        x6, y6 = p_line_2_end
+        x7, y7 = p_end_fig
+        x8, y8 = p_end
+
+        line1 = canvas.create_line(x1, y1, x2, y2, fill="black", width=LINE_WIDTH)
+        line2 = canvas.create_line(x3, y3, x4, y4, fill="black", width=LINE_WIDTH)
+        line3 = canvas.create_line(x5, y5, x6, y6, fill="black", width=LINE_WIDTH)
+        line4 = canvas.create_line(x7, y7, x8, y8, fill="black", width=LINE_WIDTH)
         canvas.elements.extend([line1, line2, line3, line4])
 
 if __name__ == "__main__":
