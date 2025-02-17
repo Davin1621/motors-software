@@ -22,7 +22,7 @@ class CanvasApp:
         self.canvas.bind("<Motion>", self.on_mouse_move)  # Bind mouse motion event
 
         self.canvas.elements = []   # List to store all elements
-        self.component_options = ["Select Component", "Resistor", "Inductor", "Capacitor", "Resistor3"]
+        self.component_options = ["Select Component", "Resistor", "Inductor", "Capacitor", "Rectangle"]
         self.len_component_options = len(self.component_options)
 
         self.parameters_labels = ["point 1","offset point 2"," offset point 3","orientation","scale"]
@@ -164,10 +164,10 @@ class CanvasApp:
         
 
         if component_type == "Resistor":
-            message = f"self.draw_resistor(self.canvas, [{x1}, {y1}], [{x2}, {y2}])"
+            message = f"self.draw_resistor(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
             print(message)
             self.log_message(message)
-            self.draw_resistor(self.canvas, [x1, y1], [x2, y2])
+            self.draw_resistor(self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale)
         elif component_type == "Inductor":
             message = f"self.draw_inductor(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
             print(message)
@@ -178,11 +178,11 @@ class CanvasApp:
             print(message)
             self.log_message(message)
             self.draw_capacitor(self.canvas, point_1, offset_point_2, offset_point_3, orientation, scale)
-        elif component_type == "Resistor3":
-            message = f"self.draw_resistor3(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
+        elif component_type == "Rectangle":
+            message = f"self.draw_rectangle(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
             print(message)
             self.log_message(message)
-            self.draw_resistor3(self.canvas, point_1, offset_point_2, int(offset_point_3), orientation, int(scale))
+            self.draw_rectangle(self.canvas, point_1, offset_point_2, offset_point_3, orientation, scale)
 
         #self.print_all_data_entries(parameters_data)
 
@@ -208,15 +208,118 @@ class CanvasApp:
                     for item in self.log:
                         writer.writerow([item])
 
-    def draw_resistor(self, canvas, p1, p2):
-        x1, y1 = p1
-        x2, y2 = p2
-        line1 = canvas.create_line(x1, y1, x1 + 5, y1, fill="black", width=LINE_WIDTH)
-        rect = canvas.create_rectangle(x1 + 5, y1 - 5, x1 + 15, y1 + 5, outline="black", width=LINE_WIDTH)
-        line2 = canvas.create_line(x1 + 15, y1, x2, y2, fill="black", width=LINE_WIDTH)
-        canvas.elements.extend([line1, rect, line2])
+    def draw_resistor(self, canvas, pmain, offset_center, offset_final, orientation, scale):
+        
+        #-----------------------------------------offset center feature-----------------------------------------
 
-    def draw_resistor3(self, canvas, pmain, offset_center, offset_final, orientation, scale):
+        if offset_center == "" or int(offset_center) == 0:
+            offset_center_var = int(offset_final) * 0.5
+            offset_final_var = int(offset_final) * 0.5
+        else:
+            offset_center_var = int(offset_center)
+            offset_final_var = int(offset_final)
+
+        #-------------------------------------------points definition-----------------------------------------
+
+
+        p_start = pmain
+        p_ref_center = [p_start[0] + offset_center_var, p_start[1]]  # center of rectangle
+        p_ref_end = [p_start[0] + offset_final_var + offset_center_var, p_start[1]]
+
+        zigzag_size = int(scale)
+
+        if zigzag_size * 1.5 >= 0.9 *abs(p_ref_center[0] - p_start[0]) or zigzag_size * 1.5 >= 0.9 * abs(p_ref_center[0] - p_ref_end[0]):
+            if abs(p_ref_center[0] - p_start[0]) > abs(p_ref_center[0] - p_ref_end[0]):
+                zigzag_size = abs(p_ref_center[0] - p_ref_end[0]) * 0.9 * (2/3)   
+            else:
+                zigzag_size = abs(p_ref_center[0] - p_start[0]) * 0.9 * (2/3)
+
+            print("-----------------------------------------maximum size reached, check scale-----------------------------------------")
+
+        p_ref_start_zig_1 = [p_ref_center[0] - zigzag_size * 1.5, p_start[1]]
+        p_ref_top_zig_1 = [p_ref_center[0] - zigzag_size * 1, p_ref_center[1] - zigzag_size]
+
+        p_ref_start_zig_2 = [p_ref_center[0] - zigzag_size * 0.5, p_ref_center[1]]
+        p_ref_top_zig_2 = [p_ref_center[0], p_ref_center[1] - zigzag_size]
+
+        p_ref_start_zig_3 = [p_ref_center[0] + zigzag_size * 0.5, p_ref_center[1]]
+        p_ref_top_zig_3 = [p_ref_center[0] + zigzag_size * 1, p_ref_center[1] - zigzag_size]
+        p_ref_end_zig_3 = [p_ref_center[0] + zigzag_size * 1.5, p_start[1]]
+
+        match orientation:
+            case "N":
+                ANGLE = 270
+                p_start_zig_1 = self.rotate_point(p_start, p_ref_start_zig_1, ANGLE)
+                p_top_zig_1 = self.rotate_point(p_start, p_ref_top_zig_1, ANGLE)
+                p_start_zig_2 = self.rotate_point(p_start, p_ref_start_zig_2, ANGLE)
+                p_top_zig_2 = self.rotate_point(p_start, p_ref_top_zig_2, ANGLE)
+                p_start_zig_3 = self.rotate_point(p_start, p_ref_start_zig_3, ANGLE)
+                p_top_zig_3 = self.rotate_point(p_start, p_ref_top_zig_3, ANGLE)
+                p_end_zig_3 = self.rotate_point(p_start, p_ref_end_zig_3, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+                
+            case "S":
+                ANGLE = 90
+                p_start_zig_1 = self.rotate_point(p_start, p_ref_start_zig_1, ANGLE)
+                p_top_zig_1 = self.rotate_point(p_start, p_ref_top_zig_1, ANGLE)
+                p_start_zig_2 = self.rotate_point(p_start, p_ref_start_zig_2, ANGLE)
+                p_top_zig_2 = self.rotate_point(p_start, p_ref_top_zig_2, ANGLE)
+                p_start_zig_3 = self.rotate_point(p_start, p_ref_start_zig_3, ANGLE)
+                p_top_zig_3 = self.rotate_point(p_start, p_ref_top_zig_3, ANGLE)
+                p_end_zig_3 = self.rotate_point(p_start, p_ref_end_zig_3, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+
+            case "E":
+                ANGLE = 0
+                p_start_zig_1 = self.rotate_point(p_start, p_ref_start_zig_1, ANGLE)
+                p_top_zig_1 = self.rotate_point(p_start, p_ref_top_zig_1, ANGLE)
+                p_start_zig_2 = self.rotate_point(p_start, p_ref_start_zig_2, ANGLE)
+                p_top_zig_2 = self.rotate_point(p_start, p_ref_top_zig_2, ANGLE)
+                p_start_zig_3 = self.rotate_point(p_start, p_ref_start_zig_3, ANGLE)
+                p_top_zig_3 = self.rotate_point(p_start, p_ref_top_zig_3, ANGLE)
+                p_end_zig_3 = self.rotate_point(p_start, p_ref_end_zig_3, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+
+            case "W":
+                ANGLE = 180
+                p_start_zig_1 = self.rotate_point(p_start, p_ref_start_zig_1, ANGLE)
+                p_top_zig_1 = self.rotate_point(p_start, p_ref_top_zig_1, ANGLE)
+                p_start_zig_2 = self.rotate_point(p_start, p_ref_start_zig_2, ANGLE)
+                p_top_zig_2 = self.rotate_point(p_start, p_ref_top_zig_2, ANGLE)
+                p_start_zig_3 = self.rotate_point(p_start, p_ref_start_zig_3, ANGLE)
+                p_top_zig_3 = self.rotate_point(p_start, p_ref_top_zig_3, ANGLE)
+                p_end_zig_3 = self.rotate_point(p_start, p_ref_end_zig_3, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+                
+        x1, y1 = p_start #start
+        x2, y2 = p_start_zig_1 #start zigzag 1
+        x3, y3 = p_top_zig_1 #top zigzag 1
+        x4, y4 = p_start_zig_2 #start zigzag 2
+        x5, y5 = p_top_zig_2 #top zigzag 2
+        x6, y6 = p_start_zig_3 #start zigzag 3
+        x7, y7 = p_top_zig_3 #top zigzag 3
+        x8, y8 = p_end_zig_3 #end zigzag 3
+        x9, y9 = p_end #end
+        
+        self.created_dots.append(p_end)
+        
+
+        line1 = canvas.create_line(x1, y1, x2, y2, fill="black", width=LINE_WIDTH)
+        
+        line2 = canvas.create_line(x2, y2, x3, y3, fill="black", width=LINE_WIDTH)
+        line3 = canvas.create_line(x3, y3, x4, y4, fill="black", width=LINE_WIDTH)
+
+        line4 = canvas.create_line(x4, y4, x5, y5, fill="black", width=LINE_WIDTH)
+        line5 = canvas.create_line(x5, y5, x6, y6, fill="black", width=LINE_WIDTH)
+
+        line6 = canvas.create_line(x6, y6, x7, y7, fill="black", width=LINE_WIDTH)
+        line7 = canvas.create_line(x7, y7, x8, y8, fill="black", width=LINE_WIDTH)
+
+        line8 = canvas.create_line(x8, y8, x9, y9, fill="black", width=LINE_WIDTH)
+
+        canvas.elements.extend([line1, line2, line3, line4, line5, line6, line7, line8])
+
+    def draw_rectangle(self, canvas, pmain, offset_center, offset_final, orientation, scale):
 
         #-----------------------------------------offset center feature-----------------------------------------
 
@@ -242,7 +345,7 @@ class CanvasApp:
         if scale == "":
             rectangle_width = MIN_WIDTH
         else:
-            rectangle_width = int(round(scale))
+            rectangle_width = int(scale)
 
         if rectangle_width * 0.5>= 0.9 *abs(p_ref_center[0] - p_start[0]) or rectangle_width * 0.5 >= 0.9 * abs(p_ref_center[0] - p_ref_final[0]):
             if abs(p_ref_center[0] - p_start[0]) > abs(p_ref_center[0] - p_ref_final[0]):
