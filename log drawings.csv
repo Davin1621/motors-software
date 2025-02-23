@@ -1,1 +1,2 @@
-self.draw_text(self.canvas, [146, 234], , )
+self.draw_solid_point(self.canvas, [198, 297])
+self.draw_resistor(.!ctkcanvas, [298, 197], , , E, )

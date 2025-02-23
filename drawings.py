@@ -28,7 +28,7 @@ class CanvasApp:
         self.canvas_memory_asignation = []  #to store and erase elements
         self.id_elements_deleted = []
 
-        self.component_options = ["Select Component", "Resistor", "Inductor", "Capacitor", "Rectangle", "Text"]
+        self.component_options = ["Select Component", "Resistor", "Inductor", "Capacitor", "Rectangle", "Text", "Node"]
         self.len_component_options = len(self.component_options)
 
         self.parameters_labels = ["start x","start y","offset point 2"," offset point 3","orientation","scale", "text", "offset x", "offset y"]
@@ -65,20 +65,6 @@ class CanvasApp:
             closest = self.canvas.find_closest(self.x_pos, self.y_pos)
             self.selected_element = closest[0] if closest else None
             #print(f"self.selected_element: {self.selected_element}")
-
-    def find_closest_excluding(self, ids_to_ignore):
-        # Obtener todos los elementos
-        all_items = self.canvas.find_all()
-        
-        # Filtrar los elementos, excluyendo los IDs a ignorar
-        filtered_items = [item for item in all_items if item not in ids_to_ignore]
-        
-        if filtered_items:
-            # Encontrar el más cercano entre los elementos filtrados
-            closest_filtered = min(filtered_items, key=lambda x: ((self.canvas.coords(x)[0] - self.x_pos)**2 + (self.canvas.coords(x)[1] - self.y_pos)**2)**0.5)
-            return (closest_filtered,)  # Retorna como tupla para mantener formato de find_closest
-        else:
-            return ()  # Retorna tupla vacía si no hay elementos
         
     def on_canvas_click(self, event):
 
@@ -88,10 +74,12 @@ class CanvasApp:
         popup.geometry("300x700")  # Define the dimensions of the popup
         #popup.grab_set()  # Configure grab_set to prevent interaction with other windows
 
-        self.coord_x = self.x_pos    #save the coordinates of the click
-        self.coord_y = self.y_pos    #save the coordinates of the click
+        self.coord_x = round(self.x_pos, 2)    #save the coordinates of the click
+        self.coord_y = round(self.y_pos, 2)    #save the coordinates of the click
 
-        label = ctk.CTkLabel(popup, text=f"X: {self.coord_x}, Y: {self.coord_y}")  #show the coordinates of the click
+        type_element = self.get_type_element(self.selected_element)
+
+        label = ctk.CTkLabel(popup, text=f"X: {self.coord_x}, Y: {self.coord_y}, id element: {self.selected_element}, type: {type_element}")  #show the coordinates of the click
 
         frame_paremeters=ctk.CTkFrame(popup)    #frame for parameters
         parameters_data = self.create_parameters_frames(frame_paremeters)
@@ -107,7 +95,7 @@ class CanvasApp:
         component_dropdown.configure(command=lambda value: self.set_item_selected(value))
 
         select_button = ctk.CTkButton(popup, text="Insert", command=lambda: self.draw_component(self.item_selected, parameters_data))
-        delete_button = ctk.CTkButton(popup, text="Delete", command=lambda: self.delete_group_selected(self.selected_element))
+        delete_button = ctk.CTkButton(popup, text="Delete", command=lambda: self.delete_group_selected())
         print_log_button = ctk.CTkButton(popup, text="Print Log", command=lambda: self.print_log())
         offset_button = ctk.CTkButton(popup, text="Offset", command=lambda: self.offset_component(self.selected_element, parameters_data))
         
@@ -123,8 +111,7 @@ class CanvasApp:
         frame_paremeters.grid_rowconfigure(0, weight=1)  # Make frame1 occupy all the space of its container
         frame_paremeters.grid_columnconfigure(0, weight=1)  # Make frame1 occupy all the space of its container
 
-    def set_item_selected(self, value):
-        self.item_selected = value
+    #-----------------------------------------position and frames creation-----------------------------------------
 
     def position_parameters_frames(self, parameters_data):
         for i in range(len(self.parameters_labels)):
@@ -165,12 +152,14 @@ class CanvasApp:
 
         return frames_parameters
 
+    #-----------------------------------------functionalities-----------------------------------------
+
     def draw_component(self, component_type, parameters_data):
         #x1, y1 = x, y
         #x2, y2 = x + 50, y
 
-        x1= int(parameters_data[0][2].get())
-        y1 = int(parameters_data[1][2].get())
+        x1= int(float(parameters_data[0][2].get()))
+        y1 = int(float(parameters_data[1][2].get()))
         offset_point_2 = parameters_data[2][2].get()
         offset_point_3 = parameters_data[3][2].get()
         orientation = parameters_data[4][2].get()
@@ -209,6 +198,12 @@ class CanvasApp:
             parameters = [self.canvas, [x1, y1], text, scale]
             self.draw_text(self.canvas, [x1, y1], text, scale)
             self.log_message(message, self.id_element_created, parameters, "Text")
+        elif component_type == "Node":
+            message = f"self.draw_solid_point(self.canvas, [{x1}, {y1}])"
+            print(message)
+            parameters = [self.canvas, [x1, y1]]
+            self.draw_solid_point(self.canvas, [x1, y1])
+            self.log_message(message, self.id_element_created, parameters, "Node")
 
         self.created_dots.append([self.coord_x, self.coord_y])
 
@@ -264,29 +259,38 @@ class CanvasApp:
                 parameters = [id_info[2][0], [x1, y1], id_info[2][2], id_info[2][3]]
                 self.draw_text(id_info[2][0],[x1, y1], id_info[2][2], id_info[2][3])
                 self.log_message(message, self.id_element_created, parameters, "Text")
+            elif id_info[3] == "Node":
+                message = f"self.draw_solid_point({id_info[2][0]}, [{x1}, {y1}])"
+                parameters = [id_info[2][0], [x1, y1]]
+                self.draw_solid_point(id_info[2][0],[x1, y1])
+                self.log_message(message, self.id_element_created, parameters, "Node")
 
-            self.delete_group_selected(id_element)
+            self.delete_group_selected()
         
-    def print_all_data_entries(self, frames_parameters):
-        for frame_items in frames_parameters:
-            entry = frame_items[2]  # Assuming the entry widget is the third item in the list
-            print(entry.get())
+    def set_item_selected(self, value):
+        self.item_selected = value
+
+    def find_closest_excluding(self, ids_to_ignore):
+        # Obtener todos los elementos
+        all_items = self.canvas.find_all()
+        
+        # Filtrar los elementos, excluyendo los IDs a ignorar
+        filtered_items = [item for item in all_items if item not in ids_to_ignore]
+        
+        if filtered_items:
+            # Encontrar el más cercano entre los elementos filtrados
+            closest_filtered = min(filtered_items, key=lambda x: ((self.canvas.coords(x)[0] - self.x_pos)**2 + (self.canvas.coords(x)[1] - self.y_pos)**2)**0.5)
+            return (closest_filtered,)  # Retorna como tupla para mantener formato de find_closest
+        else:
+            return ()  # Retorna tupla vacía si no hay elementos
+
+    #-----------------------------------------log-----------------------------------------
 
     def log_message(self, message, id_element, parameters, component_type):
         if not hasattr(self, 'log'):
             self.log = []
         
         self.log.append([message, id_element, parameters, component_type])
-
-    def print_log2(self):
-        if len(self.log) >= 1:
-
-            file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
-            if file_path:
-                with open(file_path, mode='w', newline='') as file:
-                    writer = csv.writer(file, delimiter='|', quoting=csv.QUOTE_NONE, escapechar='|')
-                    for item in self.log:
-                        writer.writerow(item[0])
 
     def print_log(self):
         if len(self.log) >= 1:
@@ -296,6 +300,22 @@ class CanvasApp:
                     writer = csv.writer(file, delimiter='|')
                     for item in self.log:
                         writer.writerow([item[0]])  # Envolver item[0] en una lista
+
+    def delete_log_entry(self, id_group):
+        if self.log:
+            for i in range(len(self.log)):
+                print(f"self.log[{i}][1]: ", self.log[i])
+                if self.log[i][1] == id_group:
+                    self.id_elements_deleted.append(self.log[i][1])
+                    # del self.log[i]
+            i_aux = 0
+            for i in range(len(self.id_elements_deleted)):
+                for i2 in range(len(self.log)):
+                    if self.id_elements_deleted[i] == self.log[i2 - i_aux][1]:
+                        del self.log[i2 - i_aux]
+                        i_aux += 1
+
+    #-----------------------------------------drawings-----------------------------------------
 
     def draw_resistor(self, canvas, pmain, offset_center, offset_final, orientation, scale):
         
@@ -412,7 +432,7 @@ class CanvasApp:
             canvas.create_line(x8, y8, x9, y9, fill="black", width=LINE_WIDTH)
         ]
 
-        self.canvas_elements_memory(lines)
+        self.canvas_elements_memory(lines, "re")
 
     def draw_rectangle(self, canvas, pmain, offset_center, offset_final, orientation, scale):
 
@@ -526,7 +546,7 @@ class CanvasApp:
             canvas.create_line(x6, y6, x7, y7, fill="black", width=LINE_WIDTH)
         ]
 
-        self.canvas_elements_memory(lines)
+        self.canvas_elements_memory(lines, "r")
 
     def draw_inductor(self, canvas, pmain, offset_center, offset_final, orientation, scale):
         
@@ -652,7 +672,7 @@ class CanvasApp:
             canvas.create_line(x9, y9, x10, y10, fill="black", width=LINE_WIDTH)
         ]
 
-        self.canvas_elements_memory(lines)
+        self.canvas_elements_memory(lines, "l")
 
     def draw_capacitor(self, canvas, pmain, offset_center, offset_final, orientation, scale):
         
@@ -762,7 +782,39 @@ class CanvasApp:
             canvas.create_line(x7, y7, x8, y8, fill="black", width=LINE_WIDTH)
         ]
 
-        self.canvas_elements_memory(lines)
+        self.canvas_elements_memory(lines, "c")
+
+    def draw_solid_point(self, canvas, pmain):
+        x, y = pmain
+        NODE_DIAMETER_DEFAULT = 10
+        
+        diameter = NODE_DIAMETER_DEFAULT
+
+        radius = int(diameter) / 2
+
+        node = canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill="black", outline="black")
+
+        self.canvas_elements_memory([node], "n")
+
+    def draw_text(self, canvas, p1, text, scale):
+        
+        if text == "":
+            text_var = "text"
+        else:
+            text_var = text
+
+        if scale == "":
+            scale_var = 12
+        else:
+            scale_var = int(scale)
+        
+        x1, y1 = p1
+        
+        text_id = canvas.create_text(x1, y1, text=text_var, font=(FONT_FAMILY, scale_var), fill="black")
+
+        self.canvas_elements_memory([text_id], "t")
+
+    #-----------------------------------------auxiliar functions-----------------------------------------
 
     def rotate_point(self, p1, p2, rotation):
         
@@ -786,14 +838,43 @@ class CanvasApp:
 
         return [new_x2, new_y2]
     
+    def get_id_group(self, id):
+        for i in range(len(self.canvas_memory_asignation)):
+            if id == self.canvas_memory_asignation[i][1]:
+                return self.canvas_memory_asignation[i][0]
+    
+    def get_type_element(self, id):
+        for i in range(len(self.canvas_memory_asignation)):
+            if id == self.canvas_memory_asignation[i][1]:
+                return self.canvas_memory_asignation[i][2]
+
+    def canvas_elements_memory(self, drawing_elements, type):
+
+        if self.canvas.elements:
+            id_start = self.canvas.elements[-1]+1
+        else:
+            id_start = 1
+
+        self.canvas.elements.extend(drawing_elements)
+
+        self.id_element_created = id_start
+        
+        for i in range(len(drawing_elements)):
+            self.canvas_memory_asignation.append([id_start,id_start+i, type])
+        
+        print(f"self.canvas_memory_asignation: {self.canvas_memory_asignation}")
+    
+    #-----------------------------------------delete-----------------------------------------
+
     def delete_selected(self, id):
         if id:
             self.canvas.delete(id)
 
-    def delete_group_selected(self, id):
-        print("self.id_elements_deleted: ", self.id_elements_deleted)
+    def delete_group_selected(self):
+        id=self.selected_element
+        #print("self.id_elements_deleted: ", self.id_elements_deleted)
         print(f"id: {id}")
-        print(f"canvas.elements: {self.canvas.elements}")
+        #print(f"canvas.elements: {self.canvas.elements}")
         print(f"self.canvas_memory_asignation: {self.canvas_memory_asignation}")
         id_group=None
         if id:
@@ -801,83 +882,28 @@ class CanvasApp:
             id_group = self.get_id_group(id)
                 
             print(f"id_group: {id_group}")
-            
-            #self.id_elements_deleted.append(id_group)
 
             for i in range(len(self.canvas_memory_asignation)):
                 
                 if id_group == self.canvas_memory_asignation[i][0]:
-                        print(f"self.canvas_memory_asignation[i][1]: {self.canvas_memory_asignation[i][1]}")
+                        print(f"Deleted records {i}: {self.canvas_memory_asignation[i][1]}")
                         self.delete_selected(self.canvas_memory_asignation[i][1])
 
         print(f"self.canvas_memory_asignation: {self.canvas_memory_asignation}")
-        print(f"canvas.elements: {self.canvas.elements}")
+        #print(f"canvas.elements: {self.canvas.elements}")
 
-        print("self.id_elements_deleted: ", self.id_elements_deleted)
+        #print("self.id_elements_deleted: ", self.id_elements_deleted)
 
         
         print("------------------self.id_elements_deleted: ---------------------", self.id_elements_deleted)
 
         self.delete_log_entry(id_group)
 
-    def get_id_group(self, id):
-        for i in range(len(self.canvas_memory_asignation)):
-            if id == self.canvas_memory_asignation[i][1]:
-                return self.canvas_memory_asignation[i][0]
-
-    def delete_log_entry(self, id_group):
-        if self.log:
-            for i in range(len(self.log)):
-                print(f"self.log[{i}][1]: ", self.log[i])
-                if self.log[i][1] == id_group:
-                    self.id_elements_deleted.append(self.log[i][1])
-                    # del self.log[i]
-            i_aux = 0
-            for i in range(len(self.id_elements_deleted)):
-                for i2 in range(len(self.log)):
-                    if self.id_elements_deleted[i] == self.log[i2 - i_aux][1]:
-                        del self.log[i2 - i_aux]
-                        i_aux += 1
-
-    def canvas_elements_memory(self, drawing_elements):
-
-        if self.canvas.elements:
-            id_start = self.canvas.elements[-1]+1
-        else:
-            id_start = 1
-
-        print(f"canvas.elements: {self.canvas.elements}")
-        print(f"id_start: {id_start}")
-
-        self.canvas.elements.extend(drawing_elements)
-
-        self.id_element_created = id_start
-        
-        for i in range(len(drawing_elements)):
-            self.canvas_memory_asignation.append([id_start,id_start+i])
-        
-        print(f"self.canvas_memory_asignation: {self.canvas_memory_asignation}")
-
     def remove_id(self, id):
         self.canvas.delete(id) 
         if id in self.canvas.elements:
             self.canvas.elements.remove(id)
     
-    def draw_text(self, canvas, p1, text, scale):
-        
-        if text == "":
-            text_var = "text"
-        else:
-            text_var = text
-
-        if scale == "":
-            scale_var = 12
-        else:
-            scale_var = int(scale)
-        
-        x1, y1 = p1
-        text_id = canvas.create_text(x1, y1, text=text_var, font=(FONT_FAMILY, scale_var), fill="black")
-        self.canvas_elements_memory([text_id])
 
 if __name__ == "__main__":
     root = ctk.CTk()
