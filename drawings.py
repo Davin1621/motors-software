@@ -1,5 +1,4 @@
-import customtkinter as ctk
-from tkinter import messagebox
+from customtkinter import CTkCanvas, CTkFrame, CTkLabel, CTkButton, CTkComboBox, CTkToplevel, CTkEntry, CTk
 import math
 import csv
 from tkinter import filedialog
@@ -11,14 +10,33 @@ PADDING = 5
 LINE_WIDTH = 2  # Constant for line width
 FONT_FAMILY = "Arial"
 
+FINAL_OFFSET_RESISTOR_DEFAULT = 100
+SCALE_RESISTOR_DEFAULT = 10
+
+FINAL_OFFSET_RECTANGLE_DEFAULT = 100
+SCALE_RECTANGLE_DEFAULT = 10
+
+FINAL_OFFSET_INDCUTOR_DEFAULT = 100
+SCALE_INDCUTOR_DEFAULT = 10
+
+FINAL_OFFSET_CAPACITOR_DEFAULT = 100
+SCALE_CAPACITOR_DEFAULT = 10
+
+FINAL_OFFSET_CAPACITOR_DEFAULT = 100
+SCALE_CAPACITOR_DEFAULT = 10
+
+NODE_DIAMETER_DEFAULT = 10
+
+FONT_SIZE_TEXT_DEFAULT = 12
+
 class CanvasApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Single Canvas")
+        #self.root.title("Single Canvas")
 
         self.created_dots = []
         
-        self.canvas = ctk.CTkCanvas(self.root, width=500, height=500, bg="SystemButtonFace", highlightthickness=1)
+        self.canvas = CTkCanvas(self.root, width=500, height=500, bg="SystemButtonFace", highlightthickness=1)
         self.canvas.pack()
 
         self.canvas.bind("<Button-1>", self.on_canvas_click)    # Bind click event
@@ -28,12 +46,12 @@ class CanvasApp:
         self.canvas_memory_asignation = []  #to store and erase elements
         self.id_elements_deleted = []
 
-        self.component_options = ["Select Component", "Resistor", "Inductor", "Capacitor", "Rectangle", "Text", "Node"]
+        self.component_options = ["Select Component", "Resistor", "Inductor", "Capacitor", "Rectangle", "Text", "Node", "DC Power Supply"]
         self.len_component_options = len(self.component_options)
 
         self.parameters_labels = ["start x","start y","offset point 2"," offset point 3","orientation","scale", "text", "offset x", "offset y"]
         
-        self.coord_label = ctk.CTkLabel(self.root, text="")
+        self.coord_label = CTkLabel(self.root, text="")
         self.coord_label.pack()
 
     def on_mouse_move(self, event):
@@ -68,7 +86,7 @@ class CanvasApp:
         
     def on_canvas_click(self, event):
 
-        popup = ctk.CTkToplevel(self.root)
+        popup = CTkToplevel(self.root)
         popup.title("Select Component")
         popup.attributes('-topmost', True)  # Ensure the popup is on top
         popup.geometry("300x700")  # Define the dimensions of the popup
@@ -79,9 +97,9 @@ class CanvasApp:
 
         type_element = self.get_type_element(self.selected_element)
 
-        label = ctk.CTkLabel(popup, text=f"X: {self.coord_x}, Y: {self.coord_y}, id element: {self.selected_element}, type: {type_element}")  #show the coordinates of the click
+        label = CTkLabel(popup, text=f"X: {self.coord_x}, Y: {self.coord_y}, id element: {self.selected_element}, type: {type_element}")  #show the coordinates of the click
 
-        frame_paremeters=ctk.CTkFrame(popup)    #frame for parameters
+        frame_paremeters=CTkFrame(popup)    #frame for parameters
         parameters_data = self.create_parameters_frames(frame_paremeters)
 
         self.position_parameters_frames(parameters_data)
@@ -89,15 +107,15 @@ class CanvasApp:
         parameters_data[0][2].insert(0, self.coord_x)
         parameters_data[1][2].insert(0, self.coord_y)
   
-        component_dropdown = ctk.CTkComboBox(popup, values=self.component_options)
+        component_dropdown = CTkComboBox(popup, values=self.component_options)
         component_dropdown.set(self.component_options[-1])
         self.item_selected = component_dropdown.get()
         component_dropdown.configure(command=lambda value: self.set_item_selected(value))
 
-        select_button = ctk.CTkButton(popup, text="Insert", command=lambda: self.draw_component(self.item_selected, parameters_data))
-        delete_button = ctk.CTkButton(popup, text="Delete", command=lambda: self.delete_group_selected())
-        print_log_button = ctk.CTkButton(popup, text="Print Log", command=lambda: self.print_log())
-        offset_button = ctk.CTkButton(popup, text="Offset", command=lambda: self.offset_component(self.selected_element, parameters_data))
+        select_button = CTkButton(popup, text="Insert", command=lambda: self.draw_component(self.item_selected, parameters_data))
+        delete_button = CTkButton(popup, text="Delete", command=lambda: self.delete_group_selected())
+        print_log_button = CTkButton(popup, text="Print Log", command=lambda: self.print_log())
+        offset_button = CTkButton(popup, text="Offset", command=lambda: self.offset_component(self.selected_element, parameters_data))
         
         label.grid(row=0, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
         component_dropdown.grid(row=1, column=0, pady=PADDING, padx=PADDING, sticky='nsew')
@@ -132,16 +150,16 @@ class CanvasApp:
             frame_items =[]
             if i == 4:
                 
-                frame_item = ctk.CTkFrame(frame_paremeters)
-                frame_item_label = ctk.CTkLabel(frame_item, text=self.parameters_labels[i], justify='center')
+                frame_item = CTkFrame(frame_paremeters)
+                frame_item_label = CTkLabel(frame_item, text=self.parameters_labels[i], justify='center')
                 combo_options = ["N", "S", "E", "W"]
-                frame_item_entry = ctk.CTkComboBox(frame_item, values=combo_options)
+                frame_item_entry = CTkComboBox(frame_item, values=combo_options)
                 frame_item_entry.set(combo_options[0])
             else:
                 
-                frame_item = ctk.CTkFrame(frame_paremeters)
-                frame_item_label = ctk.CTkLabel(frame_item, text=self.parameters_labels[i], justify='center')
-                frame_item_entry = ctk.CTkEntry(frame_item, justify='center')
+                frame_item = CTkFrame(frame_paremeters)
+                frame_item_label = CTkLabel(frame_item, text=self.parameters_labels[i], justify='center')
+                frame_item_entry = CTkEntry(frame_item, justify='center')
 
             frame_items.append(frame_item)
             frame_items.append(frame_item_label)
@@ -204,6 +222,12 @@ class CanvasApp:
             parameters = [self.canvas, [x1, y1]]
             self.draw_solid_point(self.canvas, [x1, y1])
             self.log_message(message, self.id_element_created, parameters, "Node")
+        elif component_type == "DC Power Supply":
+            message = f"self.draw_dc_power_supply(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
+            print(message)
+            parameters = [self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale]
+            self.draw_dc_power_supply(self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale)
+            self.log_message(message, self.id_element_created, parameters, "DC Power Supply")
 
         self.created_dots.append([self.coord_x, self.coord_y])
 
@@ -264,6 +288,11 @@ class CanvasApp:
                 parameters = [id_info[2][0], [x1, y1]]
                 self.draw_solid_point(id_info[2][0],[x1, y1])
                 self.log_message(message, self.id_element_created, parameters, "Node")
+            elif id_info[3] == "DC Power Supply":
+                message = f"self.draw_dc_power_supply({id_info[2][0]}, [{x1}, {y1}], {id_info[2][2]}, {id_info[2][3]}, {id_info[2][4]}, {id_info[2][5]})"
+                parameters = [id_info[2][0], [x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5]]
+                self.draw_dc_power_supply(id_info[2][0],[x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5])
+                self.log_message(message, self.id_element_created, parameters, "DC Power Supply")
 
             self.delete_group_selected()
         
@@ -304,23 +333,26 @@ class CanvasApp:
     def delete_log_entry(self, id_group):
         if self.log:
             for i in range(len(self.log)):
-                print(f"self.log[{i}][1]: ", self.log[i])
+                
                 if self.log[i][1] == id_group:
+
                     self.id_elements_deleted.append(self.log[i][1])
-                    # del self.log[i]
+                    
             i_aux = 0
+
             for i in range(len(self.id_elements_deleted)):
+
                 for i2 in range(len(self.log)):
+
                     if self.id_elements_deleted[i] == self.log[i2 - i_aux][1]:
+
                         del self.log[i2 - i_aux]
+
                         i_aux += 1
 
     #-----------------------------------------drawings-----------------------------------------
 
     def draw_resistor(self, canvas, pmain, offset_center, offset_final, orientation, scale):
-        
-        FINAL_OFFSET_RESISTOR_DEFAULT = 100
-        SCALE_RESISTOR_DEFAULT = 10
 
         if offset_final =="":
             offset_final = FINAL_OFFSET_RESISTOR_DEFAULT
@@ -434,10 +466,7 @@ class CanvasApp:
 
         self.canvas_elements_memory(lines, "re")
 
-    def draw_rectangle(self, canvas, pmain, offset_center, offset_final, orientation, scale):
-
-        FINAL_OFFSET_RECTANGLE_DEFAULT = 100
-        SCALE_RECTANGLE_DEFAULT = 10
+    def draw_rectangle(self, canvas, pmain, offset_center, offset_final, orientation, scale):       
 
         if offset_final =="":
             offset_final = FINAL_OFFSET_RECTANGLE_DEFAULT
@@ -550,9 +579,6 @@ class CanvasApp:
 
     def draw_inductor(self, canvas, pmain, offset_center, offset_final, orientation, scale):
         
-        FINAL_OFFSET_INDCUTOR_DEFAULT = 100
-        SCALE_INDCUTOR_DEFAULT = 10
-
         if offset_final =="":
             offset_final = FINAL_OFFSET_INDCUTOR_DEFAULT
         if scale == "":
@@ -676,11 +702,7 @@ class CanvasApp:
 
     def draw_capacitor(self, canvas, pmain, offset_center, offset_final, orientation, scale):
         
-
         #-----------------------------------------offset center feature-----------------------------------------
-        FINAL_OFFSET_CAPACITOR_DEFAULT = 100
-        SCALE_CAPACITOR_DEFAULT = 10
-
         if offset_final =="":
             offset_final = FINAL_OFFSET_CAPACITOR_DEFAULT
         if scale == "":
@@ -784,9 +806,115 @@ class CanvasApp:
 
         self.canvas_elements_memory(lines, "c")
 
+    def draw_dc_power_supply(self, canvas, pmain, offset_center, offset_final, orientation, scale):
+        
+        #-----------------------------------------offset center feature-----------------------------------------
+
+        if offset_final =="":
+            offset_final = FINAL_OFFSET_CAPACITOR_DEFAULT
+        if scale == "":
+            scale = SCALE_CAPACITOR_DEFAULT
+
+        if offset_center == "" or int(offset_center) == 0:
+            offset_center_var = int(offset_final) * 0.5
+            offset_final_var = int(offset_final) * 0.5
+        else:
+            offset_center_var = int(offset_center)
+            offset_final_var = int(offset_final)
+
+        #-------------------------------------------points definition-----------------------------------------
+
+
+        p_start = pmain
+        p_ref_center = [p_start[0] + offset_center_var, p_start[1]]  # center of rectangle
+        p_ref_end = [p_start[0] + offset_final_var + offset_center_var, p_start[1]]
+
+        MIN_WIDTH_POWER_SUPPLY = 5
+
+        if scale == "":
+            width_power_supply = MIN_WIDTH_POWER_SUPPLY
+        else:
+            width_power_supply = int(scale)
+
+        if width_power_supply * 1.5 >= 0.9 *abs(p_ref_center[0] - p_start[0]) or width_power_supply * 1.5 >= 0.9 * abs(p_ref_center[0] - p_ref_end[0]):
+            if abs(p_ref_center[0] - p_start[0]) > abs(p_ref_center[0] - p_ref_end[0]):
+                width_power_supply = abs(p_ref_center[0] - p_ref_end[0]) * 0.9 * (2/3)   
+            else:
+                width_power_supply = abs(p_ref_center[0] - p_start[0]) * 0.9 * (2/3)
+
+            print("-----------------------------------------maximum size reached, check scale-----------------------------------------")
+
+        height_power_supply = width_power_supply * 4
+        #-------------------------------------------points definition-----------------------------------------
+
+        p_ref_start_fig = [p_ref_center[0] - width_power_supply * 0.5, p_start[1]]
+        p_ref_line_1_start = [p_ref_center[0] - width_power_supply * 0.5, p_ref_center[1] - height_power_supply * 0.5]
+        p_ref_line_1_end = [p_ref_center[0] - width_power_supply * 0.5, p_ref_center[1] + height_power_supply * 0.5]
+        p_ref_line_2_start = [p_ref_center[0] + width_power_supply * 0.5, p_ref_center[1] - height_power_supply * 0.5 - height_power_supply * 0.4]
+        p_ref_line_2_end = [p_ref_center[0] + width_power_supply * 0.5, p_ref_center[1] + height_power_supply * 0.5 + height_power_supply * 0.4]
+        p_ref_end_fig = [p_ref_center[0] + width_power_supply * 0.5, p_ref_end[1]]
+
+
+        match orientation:
+            case "N":
+                ANGLE = 270
+                p_start_fig = self.rotate_point(p_start, p_ref_start_fig, ANGLE)
+                p_line_1_start = self.rotate_point(p_start, p_ref_line_1_start, ANGLE)
+                p_line_1_end = self.rotate_point(p_start, p_ref_line_1_end, ANGLE)
+                p_line_2_start = self.rotate_point(p_start, p_ref_line_2_start, ANGLE)
+                p_line_2_end = self.rotate_point(p_start, p_ref_line_2_end, ANGLE)
+                p_end_fig = self.rotate_point(p_start, p_ref_end_fig, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+            case "S":
+                ANGLE = 90
+                p_start_fig = self.rotate_point(p_start, p_ref_start_fig, ANGLE)
+                p_line_1_start = self.rotate_point(p_start, p_ref_line_1_start, ANGLE)
+                p_line_1_end = self.rotate_point(p_start, p_ref_line_1_end, ANGLE)
+                p_line_2_start = self.rotate_point(p_start, p_ref_line_2_start, ANGLE)
+                p_line_2_end = self.rotate_point(p_start, p_ref_line_2_end, ANGLE)
+                p_end_fig = self.rotate_point(p_start, p_ref_end_fig, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+            case "E":
+                ANGLE = 0
+                p_start_fig = self.rotate_point(p_start, p_ref_start_fig, ANGLE)
+                p_line_1_start = self.rotate_point(p_start, p_ref_line_1_start, ANGLE)
+                p_line_1_end = self.rotate_point(p_start, p_ref_line_1_end, ANGLE)
+                p_line_2_start = self.rotate_point(p_start, p_ref_line_2_start, ANGLE)
+                p_line_2_end = self.rotate_point(p_start, p_ref_line_2_end, ANGLE)
+                p_end_fig = self.rotate_point(p_start, p_ref_end_fig, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+            case "W":
+                ANGLE = 180
+                p_start_fig = self.rotate_point(p_start, p_ref_start_fig, ANGLE)
+                p_line_1_start = self.rotate_point(p_start, p_ref_line_1_start, ANGLE)
+                p_line_1_end = self.rotate_point(p_start, p_ref_line_1_end, ANGLE)
+                p_line_2_start = self.rotate_point(p_start, p_ref_line_2_start, ANGLE)
+                p_line_2_end = self.rotate_point(p_start, p_ref_line_2_end, ANGLE)
+                p_end_fig = self.rotate_point(p_start, p_ref_end_fig, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+
+        self.created_dots.append(p_end)
+
+        x1, y1 = p_start
+        x2, y2 = p_start_fig
+        x3, y3 = p_line_1_start
+        x4, y4 = p_line_1_end
+        x5, y5 = p_line_2_start
+        x6, y6 = p_line_2_end
+        x7, y7 = p_end_fig
+        x8, y8 = p_end
+
+        lines = [
+            canvas.create_line(x1, y1, x2, y2, fill="black", width=LINE_WIDTH),
+            canvas.create_line(x3, y3, x4, y4, fill="black", width=LINE_WIDTH),
+            canvas.create_line(x5, y5, x6, y6, fill="black", width=LINE_WIDTH),
+            canvas.create_line(x7, y7, x8, y8, fill="black", width=LINE_WIDTH)
+        ]
+
+        self.canvas_elements_memory(lines, "c")
+
     def draw_solid_point(self, canvas, pmain):
         x, y = pmain
-        NODE_DIAMETER_DEFAULT = 10
         
         diameter = NODE_DIAMETER_DEFAULT
 
@@ -804,7 +932,7 @@ class CanvasApp:
             text_var = text
 
         if scale == "":
-            scale_var = 12
+            scale_var = FONT_SIZE_TEXT_DEFAULT
         else:
             scale_var = int(scale)
         
@@ -872,11 +1000,11 @@ class CanvasApp:
 
     def delete_group_selected(self):
         id=self.selected_element
-        #print("self.id_elements_deleted: ", self.id_elements_deleted)
-        print(f"id: {id}")
-        #print(f"canvas.elements: {self.canvas.elements}")
-        print(f"self.canvas_memory_asignation: {self.canvas_memory_asignation}")
         id_group=None
+       
+        print(f"id: {id}")
+        print(f"self.canvas_memory_asignation: {self.canvas_memory_asignation}")
+
         if id:
 
             id_group = self.get_id_group(id)
@@ -889,11 +1017,7 @@ class CanvasApp:
                         print(f"Deleted records {i}: {self.canvas_memory_asignation[i][1]}")
                         self.delete_selected(self.canvas_memory_asignation[i][1])
 
-        print(f"self.canvas_memory_asignation: {self.canvas_memory_asignation}")
-        #print(f"canvas.elements: {self.canvas.elements}")
-
-        #print("self.id_elements_deleted: ", self.id_elements_deleted)
-
+        print(f"self.canvas_memory_asignation_elements_removed: {self.canvas_memory_asignation}")
         
         print("------------------self.id_elements_deleted: ---------------------", self.id_elements_deleted)
 
@@ -906,6 +1030,6 @@ class CanvasApp:
     
 
 if __name__ == "__main__":
-    root = ctk.CTk()
+    root = CTk()
     app = CanvasApp(root)
     root.mainloop()
