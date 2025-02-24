@@ -29,6 +29,10 @@ NODE_DIAMETER_DEFAULT = 10
 
 FONT_SIZE_TEXT_DEFAULT = 12
 
+FINAL_OFFSET_IGBT_DEFAULT = 100
+SCALE_IGBT_DEFAULT = 80
+MIN_WIDTH_IGBT = 40
+
 class CanvasApp:
     def __init__(self, root):
         self.root = root
@@ -46,7 +50,7 @@ class CanvasApp:
         self.canvas_memory_asignation = []  #to store and erase elements
         self.id_elements_deleted = []
 
-        self.component_options = ["Select Component", "Resistor", "Inductor", "Capacitor", "Rectangle", "Text", "Node", "DC Power Supply"]
+        self.component_options = ["Select Component", "Resistor", "Inductor", "Capacitor", "Rectangle", "Text", "Node", "DC Power Supply", "IGBT"]
         self.len_component_options = len(self.component_options)
 
         self.parameters_labels = ["start x","start y","offset point 2"," offset point 3","orientation","scale", "text", "offset x", "offset y"]
@@ -228,6 +232,12 @@ class CanvasApp:
             parameters = [self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale]
             self.draw_dc_power_supply(self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale)
             self.log_message(message, self.id_element_created, parameters, "DC Power Supply")
+        elif component_type == "IGBT":
+            message = f"self.draw_igbt(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
+            print(message)
+            parameters = [self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale]
+            self.draw_igbt(self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale)
+            self.log_message(message, self.id_element_created, parameters, "IGBT")
 
         self.created_dots.append([self.coord_x, self.coord_y])
 
@@ -293,6 +303,11 @@ class CanvasApp:
                 parameters = [id_info[2][0], [x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5]]
                 self.draw_dc_power_supply(id_info[2][0],[x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5])
                 self.log_message(message, self.id_element_created, parameters, "DC Power Supply")
+            elif id_info[3] == "IGBT":
+                message = f"self.draw_igbt({id_info[2][0]}, [{x1}, {y1}], {id_info[2][2]}, {id_info[2][3]}, {id_info[2][4]}, {id_info[2][5]})"
+                parameters = [id_info[2][0], [x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5]]
+                self.draw_igbt(id_info[2][0],[x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5])
+                self.log_message(message, self.id_element_created, parameters, "IGBT")
 
             self.delete_group_selected()
         
@@ -941,6 +956,187 @@ class CanvasApp:
         text_id = canvas.create_text(x1, y1, text=text_var, font=(FONT_FAMILY, scale_var), fill="black")
 
         self.canvas_elements_memory([text_id], "t")
+
+    def draw_igbt(self, canvas, pmain, offset_center, offset_final, orientation, scale):
+        
+        #-----------------------------------------offset center feature-----------------------------------------
+        if offset_final =="":
+            offset_final = FINAL_OFFSET_IGBT_DEFAULT
+
+        if offset_center == "" or int(offset_center) == 0:
+            offset_center_var = int(offset_final) * 0.5
+            offset_final_var = int(offset_final) * 0.5
+        else:
+            offset_center_var = int(offset_center)
+            offset_final_var = int(offset_final)
+
+        #-------------------------------------------points definition-----------------------------------------
+
+
+        p_start = pmain
+        p_ref_center = [p_start[0], p_start[1] + offset_center_var]  # center of rectangle
+        p_ref_end = [p_start[0], p_start[1] + offset_final_var + offset_center_var]
+
+        if scale == "":
+            width_igbt = MIN_WIDTH_IGBT
+        else:
+            width_igbt = int(scale)
+
+        start_segment = abs(p_ref_center[1] - p_start[1])
+        end_segment = abs(p_ref_center[1] - p_ref_end[1])
+
+        if width_igbt * 0.5 >= 0.9 *start_segment or width_igbt * 0.5 >= 0.9 * end_segment:
+            if start_segment > end_segment:
+                width_igbt = end_segment * 0.9   
+            else:
+                width_igbt = start_segment * 0.9
+
+            print("-----------------------------------------maximum size reached, check scale-----------------------------------------")
+
+        height_igbt = width_igbt
+
+        p_ref_center_line_1_1 = [p_ref_center[0] - width_igbt * 0.5, p_ref_center[1] - height_igbt * 0.5]
+        p_ref_center_line_1_2 = [p_ref_center[0] - width_igbt * 0.5, p_ref_center[1] + height_igbt * 0.5]
+
+        p_ref_center_line_2_1 = [p_ref_center[0] - width_igbt * 0.6, p_ref_center[1] - height_igbt * 0.5]
+        p_ref_center_line_2_2 = [p_ref_center[0] - width_igbt * 0.6, p_ref_center[1] + height_igbt * 0.5]
+
+        p_ref_gate_1 = [p_ref_center[0] - width_igbt * 1, p_ref_center[1]]
+        p_ref_gate_2 = [p_ref_center[0] - width_igbt * 0.6, p_ref_center[1]]
+
+        p_ref_source_1 = [p_ref_center[0], p_ref_center[1] - height_igbt * 0.5]
+        p_ref_source_2 = [p_ref_center[0] - width_igbt * 0.5, p_ref_center[1] - height_igbt * 0.15]
+
+        p_ref_drain_1 = [p_ref_center[0] - width_igbt * 0.5, p_ref_center[1] + height_igbt * 0.15]
+        p_ref_drain_2 = [p_ref_center[0], p_ref_center[1] + height_igbt * 0.5]
+
+        arrow_length = width_igbt * 0.2
+
+        arrow_right_height = arrow_length * 0.793
+        arrow_right_width = arrow_length * 0.666
+
+        arrow_left_height = arrow_length * 0.354
+        arrow_left_width = arrow_length * 0.973
+
+        p_ref_arrow_left = [p_ref_drain_2[0] - arrow_left_width, p_ref_center[1] + height_igbt * 0.5 - arrow_left_height]
+        p_ref_arrow_right = [p_ref_drain_2[0] - arrow_right_width, p_ref_center[1] + height_igbt * 0.5 - arrow_right_height]
+
+        match orientation:
+            case "N":
+                ANGLE = 180
+                #p_start_fig = self.rotate_point(p_start, p_ref_start_fig, ANGLE)
+                p_center = self.rotate_point(p_start, p_ref_center, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+                p_line_1_1 = self.rotate_point(p_start, p_ref_center_line_1_1, ANGLE)
+                p_line_1_2 = self.rotate_point(p_start, p_ref_center_line_1_2, ANGLE)
+                p_line_2_1 = self.rotate_point(p_start, p_ref_center_line_2_1, ANGLE)
+                p_line_2_2 = self.rotate_point(p_start, p_ref_center_line_2_2, ANGLE)
+                p_gate_1 = self.rotate_point(p_start, p_ref_gate_1, ANGLE)
+                p_gate_2 = self.rotate_point(p_start, p_ref_gate_2, ANGLE)
+                p_source_1 = self.rotate_point(p_start, p_ref_source_1, ANGLE)
+                p_source_2 = self.rotate_point(p_start, p_ref_source_2, ANGLE)
+                p_drain_1 = self.rotate_point(p_start, p_ref_drain_1, ANGLE)
+                p_drain_2 = self.rotate_point(p_start, p_ref_drain_2, ANGLE)
+                p_arrow_left = self.rotate_point(p_start, p_ref_arrow_left, ANGLE)
+                p_arrow_right = self.rotate_point(p_start, p_ref_arrow_right, ANGLE)
+
+            case "S":
+                ANGLE = 0
+                p_center = self.rotate_point(p_start, p_ref_center, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+                p_line_1_1 = self.rotate_point(p_start, p_ref_center_line_1_1, ANGLE)
+                p_line_1_2 = self.rotate_point(p_start, p_ref_center_line_1_2, ANGLE)
+                p_line_2_1 = self.rotate_point(p_start, p_ref_center_line_2_1, ANGLE)
+                p_line_2_2 = self.rotate_point(p_start, p_ref_center_line_2_2, ANGLE)
+                p_gate_1 = self.rotate_point(p_start, p_ref_gate_1, ANGLE)
+                p_gate_2 = self.rotate_point(p_start, p_ref_gate_2, ANGLE)
+                p_source_1 = self.rotate_point(p_start, p_ref_source_1, ANGLE)
+                p_source_2 = self.rotate_point(p_start, p_ref_source_2, ANGLE)
+                p_drain_1 = self.rotate_point(p_start, p_ref_drain_1, ANGLE)
+                p_drain_2 = self.rotate_point(p_start, p_ref_drain_2, ANGLE)
+                p_arrow_left = self.rotate_point(p_start, p_ref_arrow_left, ANGLE)
+                p_arrow_right = self.rotate_point(p_start, p_ref_arrow_right, ANGLE)
+
+            case "E":
+                ANGLE = 270
+                p_center = self.rotate_point(p_start, p_ref_center, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+                p_line_1_1 = self.rotate_point(p_start, p_ref_center_line_1_1, ANGLE)
+                p_line_1_2 = self.rotate_point(p_start, p_ref_center_line_1_2, ANGLE)
+                p_line_2_1 = self.rotate_point(p_start, p_ref_center_line_2_1, ANGLE)
+                p_line_2_2 = self.rotate_point(p_start, p_ref_center_line_2_2, ANGLE)
+                p_gate_1 = self.rotate_point(p_start, p_ref_gate_1, ANGLE)
+                p_gate_2 = self.rotate_point(p_start, p_ref_gate_2, ANGLE)
+                p_source_1 = self.rotate_point(p_start, p_ref_source_1, ANGLE)
+                p_source_2 = self.rotate_point(p_start, p_ref_source_2, ANGLE)
+                p_drain_1 = self.rotate_point(p_start, p_ref_drain_1, ANGLE)
+                p_drain_2 = self.rotate_point(p_start, p_ref_drain_2, ANGLE)
+                p_arrow_left = self.rotate_point(p_start, p_ref_arrow_left, ANGLE)
+                p_arrow_right = self.rotate_point(p_start, p_ref_arrow_right, ANGLE)
+                
+                
+            case "W":
+                ANGLE = +0
+                p_center = self.rotate_point(p_start, p_ref_center, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+                p_line_1_1 = self.rotate_point(p_start, p_ref_center_line_1_1, ANGLE)
+                p_line_1_2 = self.rotate_point(p_start, p_ref_center_line_1_2, ANGLE)
+                p_line_2_1 = self.rotate_point(p_start, p_ref_center_line_2_1, ANGLE)
+                p_line_2_2 = self.rotate_point(p_start, p_ref_center_line_2_2, ANGLE)
+                p_gate_1 = self.rotate_point(p_start, p_ref_gate_1, ANGLE)
+                p_gate_2 = self.rotate_point(p_start, p_ref_gate_2, ANGLE)
+                p_source_1 = self.rotate_point(p_start, p_ref_source_1, ANGLE)
+                p_source_2 = self.rotate_point(p_start, p_ref_source_2, ANGLE)
+                p_drain_1 = self.rotate_point(p_start, p_ref_drain_1, ANGLE)
+                p_drain_2 = self.rotate_point(p_start, p_ref_drain_2, ANGLE)
+                p_arrow_left = self.rotate_point(p_start, p_ref_arrow_left, ANGLE)
+                p_arrow_right = self.rotate_point(p_start, p_ref_arrow_right, ANGLE)
+
+        self.created_dots.append(p_end)
+        
+        x1, y1 = p_start
+
+        x2, y2 = p_source_1
+        x3, y3 = p_source_2
+
+        x4, y4 = p_line_1_1
+        x5, y5 = p_line_1_2
+
+        x6, y6 = p_line_2_1
+        x7, y7 = p_line_2_2
+
+        x8, y8 = p_gate_1
+        x9, y9 = p_gate_2
+
+        x10, y10 = p_center
+
+        x11, y11 = p_drain_1
+        x12, y12 = p_drain_2
+
+        x13, y13 = p_end
+
+        x14, y14 = p_arrow_left
+        x15, y15 = p_arrow_right
+
+        lines = [
+
+            canvas.create_line(x1, y1, x2, y2, fill="black"),
+            canvas.create_line(x2, y2, x3, y3, fill="black"),
+
+            canvas.create_line(x4, y4, x5, y5, fill="black"),
+            canvas.create_line(x6, y6, x7, y7, fill="black"),
+
+            canvas.create_line(x8, y8, x9, y9, fill="black"),
+
+            canvas.create_line(x11, y11, x12, y12, fill="black"),
+            canvas.create_line(x12, y12, x13, y13, fill="black"),
+
+            canvas.create_polygon(x14, y14, x15, y15, x12, y12, fill="black"),
+            
+        ]
+        
+        self.canvas_elements_memory(lines, "igbt")
+        
 
     #-----------------------------------------auxiliar functions-----------------------------------------
 
