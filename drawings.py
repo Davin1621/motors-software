@@ -64,8 +64,21 @@ class CanvasApp:
 
         self.parameters_labels = ["start x","start y","offset point 2"," offset point 3","orientation","scale", "text", "offset x", "offset y"]
         
-        self.coord_label = CTkLabel(self.root, text="")
-        self.coord_label.pack()
+        #self.coord_label = CTkLabel(self.root, text="")
+        #self.coord_label.pack()
+
+        # Create a small frame to show coordinates near the mouse pointer
+        self.coord_frame = CTkFrame(self.canvas, width=50, height=20, bg_color="white")
+        self.coord_frame.place_forget()
+        self.coord_text = CTkLabel(self.coord_frame, text="", bg_color="white")
+        self.coord_text.pack()
+
+        #----------------------------------------------paste log area one finished-----------------------------------------------
+
+    
+
+
+        #------------------------------------------------------------------------------------------------------------------------
 
     def on_mouse_move(self, event):
         
@@ -77,7 +90,8 @@ class CanvasApp:
             distance = ((event.x - dot_x)**2 + (event.y - dot_y)**2)**0.5
             
             if distance < 10:
-                self.coord_label.configure(text=f"X: {dot_x}, Y: {dot_y}")
+                self.coord_text.configure(text=f"X: {dot_x}, Y: {dot_y}")
+                self.coord_frame.place(x=event.x + 10, y=event.y + 10)
                 
                 self.x_pos = dot_x
                 self.y_pos = dot_y
@@ -89,7 +103,8 @@ class CanvasApp:
                  
                 break
         else:
-            self.coord_label.configure(text=f"X: {event.x}, Y: {event.y}")
+            self.coord_text.configure(text=f"X: {event.x}, Y: {event.y}")
+            self.coord_frame.place(x=event.x + 10, y=event.y + 10)
             #self.canvas.delete("cursor_marker")
             self.x_pos = event.x
             self.y_pos = event.y
@@ -1556,6 +1571,8 @@ class CanvasApp:
 
                 p_end_1 = self.rotate_point(p_start, p_ref_end_1, ANGLE)
 
+        self.created_dots.append(p_end)
+
         x1, y1 = p_start    
 
         x2, y2 = p_start_1
@@ -1612,6 +1629,8 @@ class CanvasApp:
                 p_final = self.rotate_point(pmain, p_ref_final, ANGLE)
 
         x2, y2 = p_final
+
+        self.created_dots.append(p_final)
 
         lines = [
             canvas.create_line(x1, y1, x2, y2, fill="black", width=LINE_WIDTH),
