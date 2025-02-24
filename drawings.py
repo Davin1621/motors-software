@@ -7,7 +7,7 @@ from tkinter import filedialog
 # Constants for padding
 LABEL_PADY = 10
 PADDING = 5
-LINE_WIDTH = 2  # Constant for line width
+LINE_WIDTH = 1  # Constant for line width
 FONT_FAMILY = "Arial"
 
 FINAL_OFFSET_RESISTOR_DEFAULT = 100
@@ -33,10 +33,19 @@ FINAL_OFFSET_IGBT_DEFAULT = 100
 SCALE_IGBT_DEFAULT = 80
 MIN_WIDTH_IGBT = 40
 
+FINAL_OFFSET_MOSFET_DEFAULT = 100
+SCALE_MOSFET_DEFAULT = 80
+MIN_WIDTH_MOSFET = 40
+
+FINAL_OFFSET_DIODE_DEFAULT = 100
+SCALE_DIODE_DEFAULT = 10
+MIN_WIDTH_DIODE = 40
+
+DEFAULT_OFFSET_LINE = 100
+
 class CanvasApp:
     def __init__(self, root):
         self.root = root
-        #self.root.title("Single Canvas")
 
         self.created_dots = []
         
@@ -50,7 +59,7 @@ class CanvasApp:
         self.canvas_memory_asignation = []  #to store and erase elements
         self.id_elements_deleted = []
 
-        self.component_options = ["Select Component", "Resistor", "Inductor", "Capacitor", "Rectangle", "Text", "Node", "DC Power Supply", "IGBT"]
+        self.component_options = ["Select Component", "Resistor", "Inductor", "Capacitor", "Rectangle", "Text", "Node", "DC Power Supply", "IGBT", "MOSFET", "Diode", "Line"]
         self.len_component_options = len(self.component_options)
 
         self.parameters_labels = ["start x","start y","offset point 2"," offset point 3","orientation","scale", "text", "offset x", "offset y"]
@@ -177,8 +186,6 @@ class CanvasApp:
     #-----------------------------------------functionalities-----------------------------------------
 
     def draw_component(self, component_type, parameters_data):
-        #x1, y1 = x, y
-        #x2, y2 = x + 50, y
 
         x1= int(float(parameters_data[0][2].get()))
         y1 = int(float(parameters_data[1][2].get()))
@@ -238,14 +245,40 @@ class CanvasApp:
             parameters = [self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale]
             self.draw_igbt(self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale)
             self.log_message(message, self.id_element_created, parameters, "IGBT")
+        elif component_type == "MOSFET":
+            message = f"self.draw_mosfet(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
+            print(message)
+            parameters = [self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale]
+            self.draw_mosfet(self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale)
+            self.log_message(message, self.id_element_created, parameters, "MOSFET")
+        elif component_type == "Diode":
+            message = f"self.draw_diode(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
+            print(message)
+            parameters = [self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale]
+            self.draw_diode(self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale)
+            self.log_message(message, self.id_element_created, parameters, "Diode")
+        elif component_type == "Line":
+            message = f"self.draw_line(self.canvas, [{x1}, {y1}], {offset_point_3},{orientation})"
+            print(message)
+            parameters = [self.canvas, [x1, y1], offset_point_3, orientation]
+            self.draw_line(self.canvas, [x1, y1], offset_point_3, orientation)
+            self.log_message(message, self.id_element_created, parameters, "Line")
 
         self.created_dots.append([self.coord_x, self.coord_y])
 
     def offset_component(self, id_element, parameters_data):
         
         id_info = None
-        offset_x = int(parameters_data[7][2].get())
-        offset_y = int(parameters_data[8][2].get())
+
+        if parameters_data[7][2].get() == "":
+            offset_x = 0
+        else: 
+            offset_x = int(parameters_data[7][2].get())
+
+        if parameters_data[8][2].get() == "":
+            offset_y = 0
+        else:
+            offset_y = int(parameters_data[8][2].get())
 
         id_group = self.get_id_group(id_element)
 
@@ -261,12 +294,8 @@ class CanvasApp:
 
         if offset_x != "" or offset_y != "":
 
-            
-
             x1 = id_info[2][1][0] + offset_x
             y1 = id_info[2][1][1] + offset_y
-
-            
 
             if id_info[3] == "Resistor":
                 message = f"self.draw_resistor({id_info[2][0]}, [{x1}, {y1}], {id_info[2][2]}, {id_info[2][3]}, {id_info[2][4]}, {id_info[2][5]})"
@@ -308,6 +337,23 @@ class CanvasApp:
                 parameters = [id_info[2][0], [x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5]]
                 self.draw_igbt(id_info[2][0],[x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5])
                 self.log_message(message, self.id_element_created, parameters, "IGBT")
+            elif id_info[3] == "MOSFET":
+                message = f"self.draw_mosfet({id_info[2][0]}, [{x1}, {y1}], {id_info[2][2]}, {id_info[2][3]}, {id_info[2][4]}, {id_info[2][5]})"
+                parameters = [id_info[2][0], [x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5]]
+                self.draw_mosfet(id_info[2][0],[x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5])
+                self.log_message(message, self.id_element_created, parameters, "MOSFET")
+            elif id_info[3] == "Diode":
+                message = f"self.draw_diode({id_info[2][0]}, [{x1}, {y1}], {id_info[2][2]}, {id_info[2][3]}, {id_info[2][4]}, {id_info[2][5]})"
+                parameters = [id_info[2][0], [x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5]]
+                self.draw_diode(id_info[2][0],[x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5])
+                self.log_message(message, self.id_element_created, parameters, "Diode")
+            elif id_info[3] == "Line":
+                message = f"self.draw_line(self.canvas, [{x1}, {y1}], {id_info[2][2]},{id_info[2][3]})"
+                print(message)
+                parameters = [self.canvas, [x1, y1], id_info[2][2], id_info[2][3]]
+                self.draw_line(self.canvas, [x1, y1], id_info[2][2], id_info[2][3])  
+                self.log_message(message, self.id_element_created, parameters, "Line")
+            
 
             self.delete_group_selected()
         
@@ -1012,11 +1058,11 @@ class CanvasApp:
 
         arrow_length = width_igbt * 0.2
 
-        arrow_right_height = arrow_length * 0.793
-        arrow_right_width = arrow_length * 0.666
+        arrow_right_height = arrow_length * 1.046
+        arrow_right_width = arrow_length * 0.488
 
-        arrow_left_height = arrow_length * 0.354
-        arrow_left_width = arrow_length * 0.973
+        arrow_left_height = arrow_length * 0.10048
+        arrow_left_width = arrow_length * 1.15
 
         p_ref_arrow_left = [p_ref_drain_2[0] - arrow_left_width, p_ref_center[1] + height_igbt * 0.5 - arrow_left_height]
         p_ref_arrow_right = [p_ref_drain_2[0] - arrow_right_width, p_ref_center[1] + height_igbt * 0.5 - arrow_right_height]
@@ -1120,24 +1166,459 @@ class CanvasApp:
 
         lines = [
 
-            canvas.create_line(x1, y1, x2, y2, fill="black"),
-            canvas.create_line(x2, y2, x3, y3, fill="black"),
+            canvas.create_line(x1, y1, x2, y2, fill="black", width=LINE_WIDTH),
+            canvas.create_line(x2, y2, x3, y3, fill="black", width=LINE_WIDTH),
 
-            canvas.create_line(x4, y4, x5, y5, fill="black"),
-            canvas.create_line(x6, y6, x7, y7, fill="black"),
+            canvas.create_line(x4, y4, x5, y5, fill="black", width=LINE_WIDTH),
+            canvas.create_line(x6, y6, x7, y7, fill="black", width=LINE_WIDTH),
 
-            canvas.create_line(x8, y8, x9, y9, fill="black"),
+            canvas.create_line(x8, y8, x9, y9, fill="black", width=LINE_WIDTH),
 
-            canvas.create_line(x11, y11, x12, y12, fill="black"),
-            canvas.create_line(x12, y12, x13, y13, fill="black"),
+            canvas.create_line(x11, y11, x12, y12, fill="black", width=LINE_WIDTH),
+            canvas.create_line(x12, y12, x13, y13, fill="black", width=LINE_WIDTH),
 
-            canvas.create_polygon(x14, y14, x15, y15, x12, y12, fill="black"),
+            canvas.create_polygon(x14, y14, x15, y15, x12, y12, fill="black", width=LINE_WIDTH),
             
         ]
         
         self.canvas_elements_memory(lines, "igbt")
         
+    def draw_mosfet(self, canvas, pmain, offset_center, offset_final, orientation, scale):
+        
+        #-----------------------------------------offset center feature-----------------------------------------
+        if offset_final =="":
+            offset_final = FINAL_OFFSET_MOSFET_DEFAULT
 
+        if offset_center == "" or int(offset_center) == 0:
+            offset_center_var = int(offset_final) * 0.5
+            offset_final_var = int(offset_final) * 0.5
+        else:
+            offset_center_var = int(offset_center)
+            offset_final_var = int(offset_final)
+
+        #-------------------------------------------points definition-----------------------------------------
+
+
+        p_start = pmain
+        p_ref_center = [p_start[0], p_start[1] + offset_center_var]  # center of rectangle
+        p_ref_end = [p_start[0], p_start[1] + offset_final_var + offset_center_var]
+
+        if scale == "":
+            width_mosfet = MIN_WIDTH_MOSFET
+        else:
+            width_mosfet = int(scale)
+
+        start_segment = abs(p_ref_center[1] - p_start[1])
+        end_segment = abs(p_ref_center[1] - p_ref_end[1])
+
+        if width_mosfet * 0.5 >= 0.9 *start_segment or width_mosfet * 0.5 >= 0.9 * end_segment:
+            if start_segment > end_segment:
+                width_mosfet = end_segment * 0.9   
+            else:
+                width_mosfet = start_segment * 0.9
+
+            print("-----------------------------------------maximum size reached, check scale-----------------------------------------")
+
+
+        height_mosfet = width_mosfet
+
+        p_ref_center_line_1_1 = [p_ref_center[0] - width_mosfet * 0.5, p_ref_center[1] - height_mosfet * 0.5]
+        p_ref_center_line_1_2 = [p_ref_center[0] - width_mosfet * 0.5, p_ref_center[1] - height_mosfet * 0.3]
+
+        p_ref_center_line_2_1 = [p_ref_center[0] - width_mosfet * 0.5, p_ref_center[1] - height_mosfet * 0.1]
+        p_ref_center_line_2_2 = [p_ref_center[0] - width_mosfet * 0.5, p_ref_center[1] + height_mosfet * 0.1]
+
+        p_ref_center_line_3_1 = [p_ref_center[0] - width_mosfet * 0.5, p_ref_center[1] + height_mosfet * 0.3]
+        p_ref_center_line_3_2 = [p_ref_center[0] - width_mosfet * 0.5, p_ref_center[1] + height_mosfet * 0.5]
+
+        p_ref_center_line_4_1 = [p_ref_center[0] - width_mosfet * 0.6, p_ref_center[1] - height_mosfet * 0.5]
+        p_ref_center_line_4_2 = [p_ref_center[0] - width_mosfet * 0.6, p_ref_center[1] + height_mosfet * 0.5]
+
+        p_ref_gate_1 = [p_ref_center[0] - width_mosfet * 1, p_ref_center[1]]
+        p_ref_gate_2 = [p_ref_center[0] - width_mosfet * 0.6, p_ref_center[1]]
+
+        p_ref_source_1 = [p_ref_center[0], p_ref_center[1] - height_mosfet * 0.4]
+        p_ref_source_2 = [p_ref_center[0] - width_mosfet * 0.5, p_ref_center[1] - height_mosfet * 0.4]
+
+        p_ref_center_arrow_1 = [p_ref_center[0], p_ref_center[1]]
+        p_ref_center_arrow_2 = [p_ref_center[0] - width_mosfet * 0.5, p_ref_center[1]]
+
+        p_ref_drain_1 = [p_ref_center[0], p_ref_center[1] + height_mosfet * 0.4]
+        p_ref_drain_2 = [p_ref_center[0] - width_mosfet * 0.5, p_ref_center[1] + height_mosfet * 0.4]
+
+        arrow_length = width_mosfet * 0.2
+
+        arrow_height = arrow_length * 0.577
+
+        p_ref_arrow_top = [p_ref_center_arrow_2[0] + arrow_length, p_ref_center_arrow_2[1] + arrow_height]
+        p_ref_arrow_bottom = [p_ref_center_arrow_2[0] + arrow_length, p_ref_center_arrow_2[1] - arrow_height]
+
+        match orientation:
+            case "N":
+                ANGLE = 180
+                p_center = self.rotate_point(p_start, p_ref_center, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+
+                p_line_1_1 = self.rotate_point(p_start, p_ref_center_line_1_1, ANGLE)
+                p_line_1_2 = self.rotate_point(p_start, p_ref_center_line_1_2, ANGLE)
+
+                p_line_2_1 = self.rotate_point(p_start, p_ref_center_line_2_1, ANGLE)
+                p_line_2_2 = self.rotate_point(p_start, p_ref_center_line_2_2, ANGLE)   
+
+                p_line_3_1 = self.rotate_point(p_start, p_ref_center_line_3_1, ANGLE)
+                p_line_3_2 = self.rotate_point(p_start, p_ref_center_line_3_2, ANGLE)
+
+                p_line_4_1 = self.rotate_point(p_start, p_ref_center_line_4_1, ANGLE)
+                p_line_4_2 = self.rotate_point(p_start, p_ref_center_line_4_2, ANGLE)
+
+                p_gate_1 = self.rotate_point(p_start, p_ref_gate_1, ANGLE)
+                p_gate_2 = self.rotate_point(p_start, p_ref_gate_2, ANGLE)
+
+                p_source_1 = self.rotate_point(p_start, p_ref_source_1, ANGLE)
+                p_source_2 = self.rotate_point(p_start, p_ref_source_2, ANGLE)
+
+                p_center_arrow_1 = self.rotate_point(p_start, p_ref_center_arrow_1, ANGLE)
+                p_center_arrow_2 = self.rotate_point(p_start, p_ref_center_arrow_2, ANGLE)
+
+                p_drain_1 = self.rotate_point(p_start, p_ref_drain_1, ANGLE)
+                p_drain_2 = self.rotate_point(p_start, p_ref_drain_2, ANGLE)
+
+                p_arrow_top = self.rotate_point(p_start, p_ref_arrow_top, ANGLE)
+                p_arrow_bottom = self.rotate_point(p_start, p_ref_arrow_bottom, ANGLE)
+
+            case "S":
+                ANGLE = 0
+                
+                p_center = self.rotate_point(p_start, p_ref_center, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+
+                p_line_1_1 = self.rotate_point(p_start, p_ref_center_line_1_1, ANGLE)
+                p_line_1_2 = self.rotate_point(p_start, p_ref_center_line_1_2, ANGLE)
+                
+                p_line_2_1 = self.rotate_point(p_start, p_ref_center_line_2_1, ANGLE)
+                p_line_2_2 = self.rotate_point(p_start, p_ref_center_line_2_2, ANGLE)
+
+                p_line_3_1 = self.rotate_point(p_start, p_ref_center_line_3_1, ANGLE)
+                p_line_3_2 = self.rotate_point(p_start, p_ref_center_line_3_2, ANGLE)
+
+                p_line_4_1 = self.rotate_point(p_start, p_ref_center_line_4_1, ANGLE)
+                p_line_4_2 = self.rotate_point(p_start, p_ref_center_line_4_2, ANGLE)
+
+                p_gate_1 = self.rotate_point(p_start, p_ref_gate_1, ANGLE)
+                p_gate_2 = self.rotate_point(p_start, p_ref_gate_2, ANGLE)
+
+                p_source_1 = self.rotate_point(p_start, p_ref_source_1, ANGLE)
+                p_source_2 = self.rotate_point(p_start, p_ref_source_2, ANGLE)
+
+                p_center_arrow_1 = self.rotate_point(p_start, p_ref_center_arrow_1, ANGLE)
+                p_center_arrow_2 = self.rotate_point(p_start, p_ref_center_arrow_2, ANGLE)
+
+                p_drain_1 = self.rotate_point(p_start, p_ref_drain_1, ANGLE)
+                p_drain_2 = self.rotate_point(p_start, p_ref_drain_2, ANGLE)
+
+                p_arrow_top = self.rotate_point(p_start, p_ref_arrow_top, ANGLE)
+                p_arrow_bottom = self.rotate_point(p_start, p_ref_arrow_bottom, ANGLE)
+
+            case "E":
+                ANGLE = 270
+
+                p_center = self.rotate_point(p_start, p_ref_center, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)    
+                
+                p_line_1_1 = self.rotate_point(p_start, p_ref_center_line_1_1, ANGLE)
+                p_line_1_2 = self.rotate_point(p_start, p_ref_center_line_1_2, ANGLE)
+
+                p_line_2_1 = self.rotate_point(p_start, p_ref_center_line_2_1, ANGLE)
+                p_line_2_2 = self.rotate_point(p_start, p_ref_center_line_2_2, ANGLE)
+
+                p_line_3_1 = self.rotate_point(p_start, p_ref_center_line_3_1, ANGLE)
+                p_line_3_2 = self.rotate_point(p_start, p_ref_center_line_3_2, ANGLE)
+
+                p_line_4_1 = self.rotate_point(p_start, p_ref_center_line_4_1, ANGLE)
+                p_line_4_2 = self.rotate_point(p_start, p_ref_center_line_4_2, ANGLE)
+
+                p_gate_1 = self.rotate_point(p_start, p_ref_gate_1, ANGLE)
+                p_gate_2 = self.rotate_point(p_start, p_ref_gate_2, ANGLE)
+
+                p_source_1 = self.rotate_point(p_start, p_ref_source_1, ANGLE)
+                p_source_2 = self.rotate_point(p_start, p_ref_source_2, ANGLE)
+
+                p_center_arrow_1 = self.rotate_point(p_start, p_ref_center_arrow_1, ANGLE)
+                p_center_arrow_2 = self.rotate_point(p_start, p_ref_center_arrow_2, ANGLE)
+
+                p_drain_1 = self.rotate_point(p_start, p_ref_drain_1, ANGLE)
+                p_drain_2 = self.rotate_point(p_start, p_ref_drain_2, ANGLE)
+
+                p_arrow_top = self.rotate_point(p_start, p_ref_arrow_top, ANGLE)
+                p_arrow_bottom = self.rotate_point(p_start, p_ref_arrow_bottom, ANGLE)
+
+            case "W":
+                ANGLE = +0
+
+                p_center = self.rotate_point(p_start, p_ref_center, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+
+                p_line_1_1 = self.rotate_point(p_start, p_ref_center_line_1_1, ANGLE)
+                p_line_1_2 = self.rotate_point(p_start, p_ref_center_line_1_2, ANGLE)
+
+                p_line_2_1 = self.rotate_point(p_start, p_ref_center_line_2_1, ANGLE)
+                p_line_2_2 = self.rotate_point(p_start, p_ref_center_line_2_2, ANGLE)
+
+                p_line_3_1 = self.rotate_point(p_start, p_ref_center_line_3_1, ANGLE)
+                p_line_3_2 = self.rotate_point(p_start, p_ref_center_line_3_2, ANGLE)
+
+                p_line_4_1 = self.rotate_point(p_start, p_ref_center_line_4_1, ANGLE)
+                p_line_4_2 = self.rotate_point(p_start, p_ref_center_line_4_2, ANGLE)
+
+                p_gate_1 = self.rotate_point(p_start, p_ref_gate_1, ANGLE)
+                p_gate_2 = self.rotate_point(p_start, p_ref_gate_2, ANGLE)
+
+                p_source_1 = self.rotate_point(p_start, p_ref_source_1, ANGLE)
+                p_source_2 = self.rotate_point(p_start, p_ref_source_2, ANGLE)
+
+                p_center_arrow_1 = self.rotate_point(p_start, p_ref_center_arrow_1, ANGLE)
+                p_center_arrow_2 = self.rotate_point(p_start, p_ref_center_arrow_2, ANGLE)
+
+                p_drain_1 = self.rotate_point(p_start, p_ref_drain_1, ANGLE)
+                p_drain_2 = self.rotate_point(p_start, p_ref_drain_2, ANGLE)
+
+                p_arrow_top = self.rotate_point(p_start, p_ref_arrow_top, ANGLE)
+                p_arrow_bottom = self.rotate_point(p_start, p_ref_arrow_bottom, ANGLE)
+
+        self.created_dots.append(p_end)
+
+        x1, y1 = p_start    
+
+        x2, y2 = p_source_1
+        x3, y3 = p_source_2
+
+        x4, y4 = p_line_1_1
+        x5, y5 = p_line_1_2
+
+        x6, y6 = p_line_2_1
+        x7, y7 = p_line_2_2
+
+        x8, y8 = p_line_3_1
+        x9, y9 = p_line_3_2
+
+        x10, y10 = p_line_4_1
+        x11, y11 = p_line_4_2
+
+        x12, y12 = p_gate_1
+        x13, y13 = p_gate_2
+
+        x14, y14 = p_center_arrow_1
+        x15, y15 = p_center_arrow_2
+
+        x16, y16 = p_drain_1
+        x17, y17 = p_drain_2
+
+        x18, y18 = p_arrow_top
+        x19, y19 = p_arrow_bottom
+
+        x20, y20 = p_end
+
+        lines = [
+            canvas.create_line(x1, y1, x2, y2, fill="black", width=LINE_WIDTH),
+            canvas.create_line(x2, y2, x3, y3, fill="black", width=LINE_WIDTH),
+
+            canvas.create_line(x4, y4, x5, y5, fill="black", width=LINE_WIDTH),
+            canvas.create_line(x6, y6, x7, y7, fill="black", width=LINE_WIDTH),
+            canvas.create_line(x8, y8, x9, y9, fill="black", width=LINE_WIDTH),
+            canvas.create_line(x10, y10, x11, y11, fill="black", width=LINE_WIDTH),
+
+            canvas.create_line(x12, y12, x13, y13, fill="black", width=LINE_WIDTH),
+
+            canvas.create_line(x14, y14, x15, y15, fill="black", width=LINE_WIDTH),
+            canvas.create_line(x16, y16, x17, y17, fill="black", width=LINE_WIDTH),
+
+            canvas.create_line(x14, y14, x20, y20, fill="black", width=LINE_WIDTH),
+
+            canvas.create_polygon(x18, y18, x15, y15, x19, y19, fill="black", width=LINE_WIDTH),
+
+        ]
+        
+        self.canvas_elements_memory(lines, "mosfet")
+                      
+    def draw_diode(self, canvas, pmain, offset_center, offset_final, orientation, scale):
+
+    #-----------------------------------------offset center feature-----------------------------------------
+        if offset_final =="":
+            offset_final = FINAL_OFFSET_DIODE_DEFAULT
+
+        if offset_center == "" or int(offset_center) == 0:
+            offset_center_var = int(offset_final) * 0.5
+            offset_final_var = int(offset_final) * 0.5
+        else:
+            offset_center_var = int(offset_center)
+            offset_final_var = int(offset_final)
+
+        #-------------------------------------------points definition-----------------------------------------
+
+
+        p_start = pmain
+        p_ref_center = [p_start[0], p_start[1] + offset_center_var]  # center of rectangle
+        p_ref_end = [p_start[0], p_start[1] + offset_final_var + offset_center_var]
+
+        if scale == "":
+            width_diode = MIN_WIDTH_DIODE
+        else:
+            width_diode = int(scale)
+
+        start_segment = abs(p_ref_center[1] - p_start[1])
+        end_segment = abs(p_ref_center[1] - p_ref_end[1])
+
+        if width_diode * 0.5 >= 0.9 *start_segment or width_diode * 0.5 >= 0.9 * end_segment:
+            if start_segment > end_segment:
+                width_diode = end_segment * 0.9   
+            else:
+                width_diode = start_segment * 0.9
+
+            print("-----------------------------------------maximum size reached, check scale-----------------------------------------")
+
+
+        height_diode = width_diode
+
+        p_ref_start_1 = [p_ref_center[0], p_ref_center[1] - height_diode * 0.5]
+
+
+        p_ref_line_1_1 = [p_ref_center[0] - width_diode * 0.5, p_ref_center[1] - height_diode * 0.5]
+        p_ref_line_1_2 = [p_ref_center[0] + width_diode * 0.5, p_ref_center[1] - height_diode * 0.5]
+
+        p_ref_line_2_1 = [p_ref_center[0] - width_diode * 0.5, p_ref_center[1] + height_diode * 0.5]
+        p_ref_line_2_2 = [p_ref_center[0] + width_diode * 0.5, p_ref_center[1] + height_diode * 0.5]
+
+
+        p_ref_end_1 = [p_ref_center[0], p_ref_center[1] + height_diode * 0.5]
+
+        match orientation:
+            case "N":
+                ANGLE = 180 
+
+                p_center = self.rotate_point(p_start, p_ref_center, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+
+                p_start_1 = self.rotate_point(p_start, p_ref_start_1, ANGLE)
+
+                p_line_1_1 = self.rotate_point(p_start, p_ref_line_1_1, ANGLE)
+                p_line_1_2 = self.rotate_point(p_start, p_ref_line_1_2, ANGLE)
+
+                p_line_2_1 = self.rotate_point(p_start, p_ref_line_2_1, ANGLE)
+                p_line_2_2 = self.rotate_point(p_start, p_ref_line_2_2, ANGLE)
+
+                p_end_1 = self.rotate_point(p_start, p_ref_end_1, ANGLE)
+
+            case "S":
+                ANGLE = 0
+
+                p_center = self.rotate_point(p_start, p_ref_center, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+                
+                p_start_1 = self.rotate_point(p_start, p_ref_start_1, ANGLE)
+
+                p_line_1_1 = self.rotate_point(p_start, p_ref_line_1_1, ANGLE)
+                p_line_1_2 = self.rotate_point(p_start, p_ref_line_1_2, ANGLE)
+
+                p_line_2_1 = self.rotate_point(p_start, p_ref_line_2_1, ANGLE)
+                p_line_2_2 = self.rotate_point(p_start, p_ref_line_2_2, ANGLE)
+
+                p_end_1 = self.rotate_point(p_start, p_ref_end_1, ANGLE)
+
+            case "E":
+                ANGLE = 270
+
+                p_center = self.rotate_point(p_start, p_ref_center, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+
+                p_start_1 = self.rotate_point(p_start, p_ref_start_1, ANGLE)
+
+                p_line_1_1 = self.rotate_point(p_start, p_ref_line_1_1, ANGLE)
+                p_line_1_2 = self.rotate_point(p_start, p_ref_line_1_2, ANGLE)
+
+                p_line_2_1 = self.rotate_point(p_start, p_ref_line_2_1, ANGLE)
+                p_line_2_2 = self.rotate_point(p_start, p_ref_line_2_2, ANGLE)
+
+                p_end_1 = self.rotate_point(p_start, p_ref_end_1, ANGLE)
+
+            case "W":
+                ANGLE = +0
+
+                p_center = self.rotate_point(p_start, p_ref_center, ANGLE)
+                p_end = self.rotate_point(p_start, p_ref_end, ANGLE)
+
+                p_start_1 = self.rotate_point(p_start, p_ref_start_1, ANGLE)
+
+                p_line_1_1 = self.rotate_point(p_start, p_ref_line_1_1, ANGLE)
+                p_line_1_2 = self.rotate_point(p_start, p_ref_line_1_2, ANGLE)
+
+                p_line_2_1 = self.rotate_point(p_start, p_ref_line_2_1, ANGLE)
+                p_line_2_2 = self.rotate_point(p_start, p_ref_line_2_2, ANGLE)  
+
+                p_end_1 = self.rotate_point(p_start, p_ref_end_1, ANGLE)
+
+        x1, y1 = p_start    
+
+        x2, y2 = p_start_1
+        
+
+        x3, y3 = p_line_1_1
+        x4, y4 = p_line_1_2
+
+        x5, y5 = p_line_2_1
+        x6, y6 = p_line_2_2
+
+        x7, y7 = p_end_1
+
+        x8, y8 = p_end
+
+        lines = [
+            canvas.create_line(x1, y1, x2, y2, fill="black", width=LINE_WIDTH),
+
+            canvas.create_line(x3, y3, x4, y4, fill="black", width=LINE_WIDTH),
+            canvas.create_line(x5, y5, x6, y6, fill="black", width=LINE_WIDTH),
+
+            canvas.create_line(x7, y7, x8, y8, fill="black", width=LINE_WIDTH),
+
+            canvas.create_line(x3, y3, x7, y7, fill="black", width=LINE_WIDTH),
+            canvas.create_line(x4, y4, x7, y7, fill="black", width=LINE_WIDTH),
+        ]
+
+        self.canvas_elements_memory(lines, "diode")
+
+    def draw_line(self, canvas, pmain, offset, orientation):
+        
+        if offset == "":
+            offset = DEFAULT_OFFSET_LINE
+        else:
+            offset = int(offset)
+        
+        x1, y1 = pmain
+
+
+        p_ref_final= [offset + x1, y1]
+        
+        match orientation:
+            case "N":
+                ANGLE = 270
+                p_final = self.rotate_point(pmain, p_ref_final, ANGLE)
+            case "S":
+                ANGLE = 90
+                p_final = self.rotate_point(pmain, p_ref_final, ANGLE)
+            case "E":
+                ANGLE = 0
+                p_final = self.rotate_point(pmain, p_ref_final, ANGLE)
+            case "W":
+                ANGLE = 180
+                p_final = self.rotate_point(pmain, p_ref_final, ANGLE)
+
+        x2, y2 = p_final
+
+        lines = [
+            canvas.create_line(x1, y1, x2, y2, fill="black", width=LINE_WIDTH),
+        ]
+
+        self.canvas_elements_memory(lines, "line")
+    
     #-----------------------------------------auxiliar functions-----------------------------------------
 
     def rotate_point(self, p1, p2, rotation):
