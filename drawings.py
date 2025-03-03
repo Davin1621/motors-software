@@ -44,13 +44,16 @@ MIN_WIDTH_DIODE = 40
 DEFAULT_OFFSET_LINE = 100
 
 class CanvasApp:
-    def __init__(self, root):
-        self.root = root
+    def __init__(self, root, name):
+        self.root = root    
+
+        self.canvas = self.root
+
+        self.canvas.pack()
+
+        #--------------------------------------------- Functions definition ---------------------------------------------
 
         self.created_dots = []
-        
-        self.canvas = CTkCanvas(self.root, width=500, height=500, bg="SystemButtonFace", highlightthickness=1)
-        self.canvas.pack()
 
         self.canvas.bind("<Button-1>", self.on_canvas_click)    # Bind click event
         self.canvas.bind("<Motion>", self.on_mouse_move)  # Bind mouse motion event
@@ -63,22 +66,32 @@ class CanvasApp:
         self.len_component_options = len(self.component_options)
 
         self.parameters_labels = ["start x","start y","offset point 2"," offset point 3","orientation","scale", "text", "offset x", "offset y"]
-        
-        #self.coord_label = CTkLabel(self.root, text="")
-        #self.coord_label.pack()
 
-        # Create a small frame to show coordinates near the mouse pointer
-        self.coord_frame = CTkFrame(self.canvas, width=50, height=20, bg_color="white")
-        self.coord_frame.place_forget()
-        self.coord_text = CTkLabel(self.coord_frame, text="", bg_color="white")
-        self.coord_text.pack()
+
+        # ----------------------------------Create a small frame to show coordinates near the mouse pointer--------------------------------
+        
+        self.coords_frame()
 
         #----------------------------------------------paste log area one finished-----------------------------------------------
+        match name:
+            case "f1":
 
-    
+                self.draw_resistor(self.canvas, [100, 163], 50, 50, 'S', 10)
+                self.draw_resistor(self.canvas, [180, 163], 50, 50, 'N', 10)
+                self.draw_resistor(self.canvas, [100, 163], 50, 50, 'N', 10)
+                pass
+            case "f2":
+                self.draw_capacitor(self.canvas, [88, 146], 50.0, 50.0, 'E', 10)
+                self.draw_resistor(self.canvas, [188, 146], 15.0, 15.0, 'N', 10)
+                self.draw_resistor(self.canvas, [88, 146], 25.0, 25.0, 'N', 5)
+                pass
+            case _:
+                pass
 
 
         #------------------------------------------------------------------------------------------------------------------------
+
+    
 
     def on_mouse_move(self, event):
         
@@ -97,9 +110,7 @@ class CanvasApp:
                 self.y_pos = dot_y
                 closest = self.canvas.find_closest(self.x_pos, self.y_pos)
                 self.selected_element = closest[0] if closest else None
-                #self.canvas.create_rectangle(dot_x - 10, dot_y - 10, dot_x + 10, dot_y + 10, outline="red", tag="cursor_marker")
-                #print(f"canvas.elements: {self.canvas.elements}")
-                #print(f"self.selected_element: {self.selected_element}")
+                
                  
                 break
         else:
@@ -110,7 +121,7 @@ class CanvasApp:
             self.y_pos = event.y
             closest = self.canvas.find_closest(self.x_pos, self.y_pos)
             self.selected_element = closest[0] if closest else None
-            #print(f"self.selected_element: {self.selected_element}")
+            
         
     def on_canvas_click(self, event):
 
@@ -213,73 +224,114 @@ class CanvasApp:
         offset_y = parameters_data[8][2].get()
 
         if component_type == "Resistor":
-            message = f"self.draw_resistor(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
-            print(message)
-            parameters = [self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale]
+
             self.draw_resistor(self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale)
-            self.log_message(message, self.id_element_created, parameters, "Resistor")
+
         elif component_type == "Inductor":
-            message = f"self.draw_inductor(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
-            print(message)
-            parameters = [self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale]
+
             self.draw_inductor(self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale)
-            self.log_message(message, self.id_element_created, parameters, "Inductor")
+
         elif component_type == "Capacitor":
-            message = f"self.draw_capacitor(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
-            print(message)
-            parameters = [self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale]
+
             self.draw_capacitor(self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale)
-            self.log_message(message, self.id_element_created, parameters, "Capacitor")
+
         elif component_type == "Rectangle":
-            message = f"self.draw_rectangle(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
-            print(message)
-            parameters = [self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale]
+
             self.draw_rectangle(self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale)
-            self.log_message(message, self.id_element_created, parameters, "Rectangle")
+
         elif component_type == "Text":
-            message = f"self.draw_text(self.canvas, [{x1}, {y1}], {text}, {scale})"
-            print(message)
-            parameters = [self.canvas, [x1, y1], text, scale]
+
             self.draw_text(self.canvas, [x1, y1], text, scale)
-            self.log_message(message, self.id_element_created, parameters, "Text")
+
         elif component_type == "Node":
-            message = f"self.draw_solid_point(self.canvas, [{x1}, {y1}])"
-            print(message)
-            parameters = [self.canvas, [x1, y1]]
+
             self.draw_solid_point(self.canvas, [x1, y1])
-            self.log_message(message, self.id_element_created, parameters, "Node")
+
         elif component_type == "DC Power Supply":
-            message = f"self.draw_dc_power_supply(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
-            print(message)
-            parameters = [self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale]
+
             self.draw_dc_power_supply(self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale)
-            self.log_message(message, self.id_element_created, parameters, "DC Power Supply")
+
         elif component_type == "IGBT":
-            message = f"self.draw_igbt(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
-            print(message)
-            parameters = [self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale]
+
             self.draw_igbt(self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale)
-            self.log_message(message, self.id_element_created, parameters, "IGBT")
+
         elif component_type == "MOSFET":
-            message = f"self.draw_mosfet(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
-            print(message)
-            parameters = [self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale]
+
             self.draw_mosfet(self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale)
-            self.log_message(message, self.id_element_created, parameters, "MOSFET")
+
         elif component_type == "Diode":
-            message = f"self.draw_diode(self.canvas, [{x1}, {y1}], {offset_point_2}, {offset_point_3}, {orientation}, {scale})"
-            print(message)
-            parameters = [self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale]
+
             self.draw_diode(self.canvas, [x1, y1], offset_point_2, offset_point_3, orientation, scale)
-            self.log_message(message, self.id_element_created, parameters, "Diode")
+
         elif component_type == "Line":
-            message = f"self.draw_line(self.canvas, [{x1}, {y1}], {offset_point_3},{orientation})"
-            print(message)
-            parameters = [self.canvas, [x1, y1], offset_point_3, orientation]
+
             self.draw_line(self.canvas, [x1, y1], offset_point_3, orientation)
-            self.log_message(message, self.id_element_created, parameters, "Line")
 
         self.created_dots.append([self.coord_x, self.coord_y])
+
+    def message_creation(self, component_type, canvas, pmain, offset1, offset2, orientation, scale):
+        
+        x1 = pmain[0]
+        y1 = pmain[1]
+
+
+        if component_type == "Resistor":
+            message = f"self.draw_resistor(self.canvas, [{x1}, {y1}], {offset1}, {offset2}, '{orientation}', {scale})"
+            parameters = [self.canvas, pmain, offset1, offset2, orientation, scale]
+            self.log_message(message, self.id_element_created, parameters, "Resistor")
+
+        elif component_type == "Inductor":
+            message = f"self.draw_inductor(self.canvas, [{x1}, {y1}], {offset1}, {offset2}, '{orientation}', {scale})"
+            parameters = [self.canvas, pmain, offset1, offset2, orientation, scale]
+            self.log_message(message, self.id_element_created, parameters, "Inductor")
+
+        elif component_type == "Capacitor":
+            message = f"self.draw_capacitor(self.canvas, [{x1}, {y1}], {offset1}, {offset2}, '{orientation}', {scale})"
+            parameters = [self.canvas, pmain, offset1, offset2, orientation, scale]
+            self.log_message(message, self.id_element_created, parameters, "Capacitor")
+
+        elif component_type == "Rectangle":
+            message = f"self.draw_rectangle(self.canvas, [{x1}, {y1}], {offset1}, {offset2}, '{orientation}', {scale})"
+            parameters = [self.canvas, pmain, offset1, offset2, orientation, scale]
+            self.log_message(message, self.id_element_created, parameters, "Rectangle")
+
+        elif component_type == "DC Power Supply":
+            message = f"self.draw_dc_power_supply(self.canvas, [{x1}, {y1}], {offset1}, {offset2}, '{orientation}', {scale})"
+            parameters = [self.canvas, pmain, offset1, offset2, orientation, scale]
+            self.log_message(message, self.id_element_created, parameters, "DC Power Supply")
+
+        elif component_type == "IGBT":
+            message = f"self.draw_igbt(self.canvas, [{x1}, {y1}], {offset1}, {offset2}, '{orientation}', {scale})"
+            parameters = [self.canvas, pmain, offset1, offset2, orientation, scale]
+            self.log_message(message, self.id_element_created, parameters, "IGBT")
+
+        elif component_type == "MOSFET":
+            message = f"self.draw_mosfet(self.canvas, [{x1}, {y1}], {offset1}, {offset2}, '{orientation}', {scale})"
+            parameters = [self.canvas, pmain, offset1, offset2, orientation, scale]
+            self.log_message(message, self.id_element_created, parameters, "MOSFET")
+
+        elif component_type == "Diode":
+            message = f"self.draw_diode(self.canvas, [{x1}, {y1}], {offset1}, {offset2}, '{orientation}', {scale})"
+            parameters = [self.canvas, pmain, offset1, offset2, orientation, scale]
+            self.log_message(message, self.id_element_created, parameters, "Diode")
+
+        elif component_type == "Text":
+            #message = f"self.draw_text(self.canvas, [{x1}, {y1}], {text}, {scale})"
+            message = f"self.draw_text(self.canvas, [{x1}, {y1}], {offset1}, {offset2})"
+            parameters = [self.canvas, pmain, offset1, offset2]
+            self.log_message(message, self.id_element_created, parameters, "Text")
+
+        elif component_type == "Node":
+            #message = f"self.draw_solid_point(self.canvas, [{x1}, {y1}])"
+            message = f"self.draw_solid_point(self.canvas, [{offset1}, {offset2}])"
+            parameters = [self.canvas, pmain, offset1, offset2]
+            self.log_message(message, self.id_element_created, parameters, "Node")
+
+        elif component_type == "Line":
+            #message = f"self.draw_line(self.canvas, [{x1}, {y1}], {offset_point_3},{orientation})"
+            message = f"self.draw_line(self.canvas, [{x1}, {y1}], {offset1},{offset2})"
+            parameters = [self.canvas, pmain, offset1, offset2]
+            self.log_message(message, self.id_element_created, parameters, "Line")
 
     def offset_component(self, id_element, parameters_data):
         
@@ -313,62 +365,48 @@ class CanvasApp:
             y1 = id_info[2][1][1] + offset_y
 
             if id_info[3] == "Resistor":
-                message = f"self.draw_resistor({id_info[2][0]}, [{x1}, {y1}], {id_info[2][2]}, {id_info[2][3]}, {id_info[2][4]}, {id_info[2][5]})"
-                parameters = [id_info[2][0], [x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5]]
+
                 self.draw_resistor(id_info[2][0],[x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5])
-                self.log_message(message, self.id_element_created, parameters, "Resistor")
+
             elif id_info[3] == "Inductor":
-                message = f"self.draw_inductor({id_info[2][0]}, [{x1}, {y1}], {id_info[2][2]}, {id_info[2][3]}, {id_info[2][4]}, {id_info[2][5]})"
-                parameters = [id_info[2][0], [x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5]]
+
                 self.draw_inductor(id_info[2][0],[x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5])
-                self.log_message(message, self.id_element_created, parameters, "Inductor")
+
             elif id_info[3] == "Capacitor":
-                message = f"self.draw_capacitor({id_info[2][0]}, [{x1}, {y1}], {id_info[2][2]}, {id_info[2][3]}, {id_info[2][4]}, {id_info[2][5]})"
-                parameters = [id_info[2][0], [x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5]]
+
                 self.draw_capacitor(id_info[2][0],[x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5])
-                self.log_message(message, self.id_element_created, parameters, "Capacitor")
+
             elif id_info[3] == "Rectangle":
-                message = f"self.draw_rectangle({id_info[2][0]}, [{x1}, {y1}], {id_info[2][2]}, {id_info[2][3]}, {id_info[2][4]}, {id_info[2][5]})"
-                parameters = [id_info[2][0], [x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5]]
+
                 self.draw_rectangle(id_info[2][0],[x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5])
-                self.log_message(message, self.id_element_created, parameters, "Rectangle")
+
             elif id_info[3] == "Text":
-                message = f"self.draw_text({id_info[2][0]}, [{x1}, {y1}], {id_info[2][2]}, {id_info[2][3]})"
-                parameters = [id_info[2][0], [x1, y1], id_info[2][2], id_info[2][3]]
+
                 self.draw_text(id_info[2][0],[x1, y1], id_info[2][2], id_info[2][3])
-                self.log_message(message, self.id_element_created, parameters, "Text")
+
             elif id_info[3] == "Node":
-                message = f"self.draw_solid_point({id_info[2][0]}, [{x1}, {y1}])"
-                parameters = [id_info[2][0], [x1, y1]]
+
                 self.draw_solid_point(id_info[2][0],[x1, y1])
-                self.log_message(message, self.id_element_created, parameters, "Node")
+
             elif id_info[3] == "DC Power Supply":
-                message = f"self.draw_dc_power_supply({id_info[2][0]}, [{x1}, {y1}], {id_info[2][2]}, {id_info[2][3]}, {id_info[2][4]}, {id_info[2][5]})"
-                parameters = [id_info[2][0], [x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5]]
+
                 self.draw_dc_power_supply(id_info[2][0],[x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5])
-                self.log_message(message, self.id_element_created, parameters, "DC Power Supply")
+
             elif id_info[3] == "IGBT":
-                message = f"self.draw_igbt({id_info[2][0]}, [{x1}, {y1}], {id_info[2][2]}, {id_info[2][3]}, {id_info[2][4]}, {id_info[2][5]})"
-                parameters = [id_info[2][0], [x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5]]
+
                 self.draw_igbt(id_info[2][0],[x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5])
-                self.log_message(message, self.id_element_created, parameters, "IGBT")
+
             elif id_info[3] == "MOSFET":
-                message = f"self.draw_mosfet({id_info[2][0]}, [{x1}, {y1}], {id_info[2][2]}, {id_info[2][3]}, {id_info[2][4]}, {id_info[2][5]})"
-                parameters = [id_info[2][0], [x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5]]
+
                 self.draw_mosfet(id_info[2][0],[x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5])
-                self.log_message(message, self.id_element_created, parameters, "MOSFET")
+
             elif id_info[3] == "Diode":
-                message = f"self.draw_diode({id_info[2][0]}, [{x1}, {y1}], {id_info[2][2]}, {id_info[2][3]}, {id_info[2][4]}, {id_info[2][5]})"
-                parameters = [id_info[2][0], [x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5]]
+
                 self.draw_diode(id_info[2][0],[x1, y1], id_info[2][2], id_info[2][3], id_info[2][4], id_info[2][5])
-                self.log_message(message, self.id_element_created, parameters, "Diode")
+
             elif id_info[3] == "Line":
-                message = f"self.draw_line(self.canvas, [{x1}, {y1}], {id_info[2][2]},{id_info[2][3]})"
-                print(message)
-                parameters = [self.canvas, [x1, y1], id_info[2][2], id_info[2][3]]
+
                 self.draw_line(self.canvas, [x1, y1], id_info[2][2], id_info[2][3])  
-                self.log_message(message, self.id_element_created, parameters, "Line")
-            
 
             self.delete_group_selected()
         
@@ -397,7 +435,7 @@ class CanvasApp:
         
         self.log.append([message, id_element, parameters, component_type])
 
-    def print_log(self):
+    def print_log2(self):
         if len(self.log) >= 1:
             file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
             if file_path:
@@ -405,6 +443,14 @@ class CanvasApp:
                     writer = csv.writer(file, delimiter='|')
                     for item in self.log:
                         writer.writerow([item[0]])  # Envolver item[0] en una lista
+
+    def print_log(self):
+        if len(self.log) >= 1:
+            file_path = filedialog.asksaveasfilename(defaultextension=".py", filetypes=[("Python files", "*.py")])
+            if file_path:
+                with open(file_path, mode='w', newline='') as file:
+                    for item in self.log:
+                        file.write(f"{item[0]}\n")  # Escribir cada mensaje de log en una nueva línea
 
     def delete_log_entry(self, id_group):
         if self.log:
@@ -429,6 +475,9 @@ class CanvasApp:
     #-----------------------------------------drawings-----------------------------------------
 
     def draw_resistor(self, canvas, pmain, offset_center, offset_final, orientation, scale):
+        
+        
+
 
         if offset_final =="":
             offset_final = FINAL_OFFSET_RESISTOR_DEFAULT
@@ -528,6 +577,7 @@ class CanvasApp:
         
         self.created_dots.append(p_end)
         
+        
 
         lines = [
             canvas.create_line(x1, y1, x2, y2, fill="black", width=LINE_WIDTH),
@@ -542,6 +592,8 @@ class CanvasApp:
 
         self.canvas_elements_memory(lines, "re")
 
+        self.message_creation("Resistor", self.canvas, pmain, offset_center_var, offset_final_var, orientation, scale)
+        
     def draw_rectangle(self, canvas, pmain, offset_center, offset_final, orientation, scale):       
 
         if offset_final =="":
@@ -652,6 +704,8 @@ class CanvasApp:
         ]
 
         self.canvas_elements_memory(lines, "r")
+
+        self.message_creation("Rectangle", self.canvas, pmain, offset_center_var, offset_final_var, orientation, scale)
 
     def draw_inductor(self, canvas, pmain, offset_center, offset_final, orientation, scale):
         
@@ -776,6 +830,8 @@ class CanvasApp:
 
         self.canvas_elements_memory(lines, "l")
 
+        self.message_creation("Inductor", self.canvas, pmain, offset_center_var, offset_final_var, orientation, scale)
+
     def draw_capacitor(self, canvas, pmain, offset_center, offset_final, orientation, scale):
         
         #-----------------------------------------offset center feature-----------------------------------------
@@ -881,6 +937,8 @@ class CanvasApp:
         ]
 
         self.canvas_elements_memory(lines, "c")
+
+        self.message_creation("Capacitor", self.canvas, pmain, offset_center_var, offset_final_var, orientation, width_capacitor)
 
     def draw_dc_power_supply(self, canvas, pmain, offset_center, offset_final, orientation, scale):
         
@@ -989,35 +1047,8 @@ class CanvasApp:
 
         self.canvas_elements_memory(lines, "c")
 
-    def draw_solid_point(self, canvas, pmain):
-        x, y = pmain
-        
-        diameter = NODE_DIAMETER_DEFAULT
-
-        radius = int(diameter) / 2
-
-        node = canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill="black", outline="black")
-
-        self.canvas_elements_memory([node], "n")
-
-    def draw_text(self, canvas, p1, text, scale):
-        
-        if text == "":
-            text_var = "text"
-        else:
-            text_var = text
-
-        if scale == "":
-            scale_var = FONT_SIZE_TEXT_DEFAULT
-        else:
-            scale_var = int(scale)
-        
-        x1, y1 = p1
-        
-        text_id = canvas.create_text(x1, y1, text=text_var, font=(FONT_FAMILY, scale_var), fill="black")
-
-        self.canvas_elements_memory([text_id], "t")
-
+        self.message_creation("DC Power Supply", self.canvas, pmain, offset_center_var, offset_final_var, orientation, width_power_supply)
+    
     def draw_igbt(self, canvas, pmain, offset_center, offset_final, orientation, scale):
         
         #-----------------------------------------offset center feature-----------------------------------------
@@ -1197,6 +1228,8 @@ class CanvasApp:
         ]
         
         self.canvas_elements_memory(lines, "igbt")
+
+        self.message_creation("IGBT", self.canvas, pmain, offset_center_var, offset_final_var, orientation, width_igbt)
         
     def draw_mosfet(self, canvas, pmain, offset_center, offset_final, orientation, scale):
         
@@ -1454,6 +1487,8 @@ class CanvasApp:
         ]
         
         self.canvas_elements_memory(lines, "mosfet")
+
+        self.message_creation("MOSFET", self.canvas, pmain, offset_center_var, offset_final_var, orientation, width_mosfet)
                       
     def draw_diode(self, canvas, pmain, offset_center, offset_final, orientation, scale):
 
@@ -1602,6 +1637,8 @@ class CanvasApp:
 
         self.canvas_elements_memory(lines, "diode")
 
+        self.message_creation("Diode", self.canvas, pmain, offset_center_var, offset_final_var, orientation, width_diode)
+
     def draw_line(self, canvas, pmain, offset, orientation):
         
         if offset == "":
@@ -1637,6 +1674,41 @@ class CanvasApp:
         ]
 
         self.canvas_elements_memory(lines, "line")
+
+        self.message_creation("Line", self.canvas, pmain, offset, orientation)
+    
+    def draw_solid_point(self, canvas, pmain):
+        x, y = pmain
+        
+        diameter = NODE_DIAMETER_DEFAULT
+
+        radius = int(diameter) / 2
+
+        node = canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill="black", outline="black")
+
+        self.canvas_elements_memory([node], "n")
+
+        self.message_creation("Solid Point", self.canvas, pmain)
+    
+    def draw_text(self, canvas, p1, text, scale):
+        
+        if text == "":
+            text_var = "text"
+        else:
+            text_var = text
+
+        if scale == "":
+            scale_var = FONT_SIZE_TEXT_DEFAULT
+        else:
+            scale_var = int(scale)
+        
+        x1, y1 = p1
+        
+        text_id = canvas.create_text(x1, y1, text=text_var, font=(FONT_FAMILY, scale_var), fill="black")
+
+        self.canvas_elements_memory([text_id], "t")
+
+        self.message_creation("Text", self.canvas, p1, text_var, scale_var)
     
     #-----------------------------------------auxiliar functions-----------------------------------------
 
@@ -1686,8 +1758,13 @@ class CanvasApp:
         for i in range(len(drawing_elements)):
             self.canvas_memory_asignation.append([id_start,id_start+i, type])
         
-        print(f"self.canvas_memory_asignation: {self.canvas_memory_asignation}")
+        #print(f"self.canvas_memory_asignation: {self.canvas_memory_asignation}")
     
+    def coords_frame(self):
+        self.coord_frame = CTkFrame(self.canvas, width=50, height=20, bg_color="white")
+        self.coord_frame.place_forget()
+        self.coord_text = CTkLabel(self.coord_frame, text="", bg_color="white")
+        self.coord_text.pack()
     #-----------------------------------------delete-----------------------------------------
 
     def delete_selected(self, id):
