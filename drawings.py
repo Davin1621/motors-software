@@ -78,9 +78,13 @@ class CanvasApp:
         #----------------------------------------------paste log area one finished-----------------------------------------------
         match name:
             case "f1":
-                self.draw_capacitor(self.canvas, [67, 259], 50, 50, 'N', 10)
-                self.draw_text(self.canvas, [150, 244], "asdfa", 12)
-                self.draw_resistor(self.canvas, [146, 161], 50.0, 50.0, 'N', 10)
+                self.draw_resistor(self.canvas, [83, 297], 50.0, 50.0, 'N', 10)
+                self.draw_line(self.canvas, [83, 197], 100, 'E')
+                self.draw_inductor(self.canvas, [83, 197], 50.0, 50.0, 'N', 10)
+                self.draw_inductor(self.canvas, [83, 297], 50.0, 50.0, 'S', 10)
+                self.draw_resistor(self.canvas, [168, 33], 50.0, 50.0, 'S', 10)
+                self.draw_inductor(self.canvas, [168, 133], 50.0, 50.0, 'S', 10)
+                self.draw_resistor(self.canvas, [183, 197], 50.0, 50.0, 'S', 10)
                 pass
             case "f2":
 
@@ -90,8 +94,6 @@ class CanvasApp:
 
 
         #------------------------------------------------------------------------------------------------------------------------
-
-    
 
     def on_mouse_move(self, event):
         
@@ -123,7 +125,7 @@ class CanvasApp:
             self.selected_element = closest[0] if closest else None
             
     def on_canvas_click(self, event):
-
+        self.selected_element_fix = self.selected_element
         popup = CTkToplevel(self.root)
         popup.title("Select Component")
         popup.attributes('-topmost', True)  # Ensure the popup is on top
@@ -328,7 +330,7 @@ class CanvasApp:
 
         elif component_type == "Line":
             #message = f"self.draw_line(self.canvas, [{x1}, {y1}], {offset_point_3},{orientation})"
-            message = f"self.draw_line(self.canvas, [{x1}, {y1}], {offset1},{offset2})"
+            message = f"self.draw_line(self.canvas, [{x1}, {y1}], {offset1},'{offset2}')"
             parameters = [self.canvas, pmain, offset1, offset2]
             self.log_message(message, self.id_element_created, parameters, component_type)
 
@@ -435,7 +437,7 @@ class CanvasApp:
         
         self.log.append([message, id_element, parameters, component_type])
 
-        print(f"log: {self.log}")
+        #print(f"log: {self.log}")
 
     def print_log2(self):
         if len(self.log) >= 1:
@@ -1488,7 +1490,7 @@ class CanvasApp:
         self.canvas_elements_memory(lines, "mosfet")
 
         self.message_creation("MOSFET", self.canvas, pmain, offset_center_var, offset_final_var, orientation, width_mosfet)
-                      
+    
     def draw_diode(self, canvas, pmain, offset_center, offset_final, orientation, scale):
 
     #-----------------------------------------offset center feature-----------------------------------------
@@ -1771,27 +1773,27 @@ class CanvasApp:
             self.canvas.delete(id)
 
     def delete_group_selected(self):
-        id=self.selected_element
+        id=self.selected_element_fix
         id_group=None
        
-        print(f"id: {id}")
-        print(f"self.canvas_memory_asignation: {self.canvas_memory_asignation}")
+        #print(f"id: {id}")
+        #print(f"self.canvas_memory_asignation: {self.canvas_memory_asignation}")
 
         if id:
 
             id_group = self.get_id_group(id)
                 
-            print(f"id_group: {id_group}")
+           #print(f"id_group: {id_group}")
 
             for i in range(len(self.canvas_memory_asignation)):
                 
                 if id_group == self.canvas_memory_asignation[i][0]:
-                        print(f"Deleted records {i}: {self.canvas_memory_asignation[i][1]}")
+                        #print(f"Deleted records {i}: {self.canvas_memory_asignation[i][1]}")
                         self.delete_selected(self.canvas_memory_asignation[i][1])
 
-        print(f"self.canvas_memory_asignation_elements_removed: {self.canvas_memory_asignation}")
+        #print(f"self.canvas_memory_asignation_elements_removed: {self.canvas_memory_asignation}")
         
-        print("------------------self.id_elements_deleted: ---------------------", self.id_elements_deleted)
+        #print("------------------self.id_elements_deleted: ---------------------", self.id_elements_deleted)
 
         self.delete_log_entry(id_group)
 
