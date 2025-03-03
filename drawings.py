@@ -25,6 +25,9 @@ SCALE_CAPACITOR_DEFAULT = 10
 FINAL_OFFSET_CAPACITOR_DEFAULT = 100
 SCALE_CAPACITOR_DEFAULT = 10
 
+SCALE_POWER_SUPPLY_DEFAULT = 10
+FINAL_OFFSET_POWER_SUPPLY_DEFAULT = 100
+
 NODE_DIAMETER_DEFAULT = 10
 
 FONT_SIZE_TEXT_DEFAULT = 12
@@ -475,9 +478,6 @@ class CanvasApp:
     #-----------------------------------------drawings-----------------------------------------
 
     def draw_resistor(self, canvas, pmain, offset_center, offset_final, orientation, scale):
-        
-        
-
 
         if offset_final =="":
             offset_final = FINAL_OFFSET_RESISTOR_DEFAULT
@@ -945,9 +945,9 @@ class CanvasApp:
         #-----------------------------------------offset center feature-----------------------------------------
 
         if offset_final =="":
-            offset_final = FINAL_OFFSET_CAPACITOR_DEFAULT
+            offset_final = FINAL_OFFSET_POWER_SUPPLY_DEFAULT
         if scale == "":
-            scale = SCALE_CAPACITOR_DEFAULT
+            scale = SCALE_POWER_SUPPLY_DEFAULT
 
         if offset_center == "" or int(offset_center) == 0:
             offset_center_var = int(offset_final) * 0.5
